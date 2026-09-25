@@ -1,39 +1,275 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nalayira Divya Prabandham</title>
-<meta name="description" content="All 4,000 pasurams of the Alvars in Tamil and English, with taniyans, meanings, recitation audio and the 108 Divya Desams.">
-<meta property="og:type" content="website">
-<meta property="og:site_name" content="Nalayira Divya Prabandham">
-<meta property="og:title" content="Nalayira Divya Prabandham">
-<meta property="og:description" content="All 4,000 pasurams of the Alvars in Tamil and English, with taniyans, meanings, recitation audio and the 108 Divya Desams.">
-<meta property="og:url" content="https://divyaprabandam.github.io/">
-<meta property="og:image" content="https://media.divyaprabandam.workers.dev/media/ec827faa6ec7.png">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f3e3c7">
-<meta name="referrer" content="no-referrer">
-<script>(function(){var R='https://media.divyaprabandam.workers.dev/media/';
-function idOf(u){return u&&u.indexOf(R)===0?u.slice(R.length).split('?')[0]:null}
-function note(t){var d=document.getElementById('mnote');if(!d){d=document.createElement('div');d.id='mnote';d.setAttribute('role','status');d.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);width:max-content;max-width:88vw;background:#3b2a1a;color:#fff;padding:10px 16px;border-radius:10px;font:15px/1.4 system-ui,sans-serif;z-index:99999;box-shadow:0 2px 10px rgba(0,0,0,.3)';document.body.appendChild(d);}d.textContent=t;clearTimeout(d._t);d._t=setTimeout(function(){d.remove()},6000);}
-var MSG='This recording is not available right now. Please try again in a little while.',DMSG='This file is not available right now. Please try again in a little while.';
-function fix(a){var s=a.currentSrc||a.src,id=idOf(s);if(!id)return;var t=a.currentTime||0,p=!a.paused||a.dataset.want;
-if(!a.dataset.r){a.dataset.r=1;a.src=R+id+'?r=1';a.load();try{a.currentTime=t}catch(e){}if(p)a.play().catch(function(){});return;}
-note(MSG);}
-document.addEventListener('error',function(e){var a=e.target;if(a instanceof HTMLMediaElement)fix(a);},true);
-var A=window.Audio;window.Audio=function(s){var a=new A(s);a.addEventListener('error',function(){fix(a)});a.addEventListener('playing',function(){delete a.dataset.r});return a;};window.Audio.prototype=A.prototype;
-document.addEventListener('playing',function(e){var a=e.target;if(a instanceof HTMLMediaElement)delete a.dataset.r;},true);
-document.addEventListener('click',function(e){var l=e.target.closest&&e.target.closest('a[href]');if(!l)return;var id=idOf(l.href);if(!id)return;e.preventDefault();var w=window.open('','_blank');
-var c=new AbortController(),tm=setTimeout(function(){c.abort()},8000);
-fetch(R+id,{method:'HEAD',cache:'no-store',signal:c.signal}).then(function(r){clearTimeout(tm);if(!r.ok)throw 0;w?w.location=R+id:location.href=R+id;}).catch(function(){if(w)w.close();note(DMSG);});},true);
-})();</script>
-<script>if(/^#?\/?(recite|learn|explore|search|sources)?\/?$/.test(location.hash)){var pl=document.createElement('link');pl.rel='preload';pl.as='image';pl.href='https://media.divyaprabandam.workers.dev/media/ec827faa6ec7.png';pl.setAttribute('fetchpriority','high');document.head.appendChild(pl);}</script>
-<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="assets/main-LPRYFDWB.css">
-<link rel="modulepreload" href="assets/main-WDZANRYO.js">
-</head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YuE-Studio - Create, Edit and Master Music Locally on Apple Silicon</title>
+    <meta name="description" content="YuE-Studio is a free, open-source macOS app for Apple Silicon that lets you create, edit, and master music locally with full-quality YuE2 generation, reversible audio editing, and Studio Mastering. Export lossless or MP3.">
+    <meta name="keywords" content="apple-silicon,audio,audio-mastering,local-ai,macos,music-creation,music-generation,music-production,open-source,swiftui,yue2">
+    <meta name="author" content="EliasXD890">
+    <meta property="og:title" content="YuE-Studio - Create, Edit and Master Music Locally on Apple Silicon">
+    <meta property="og:description" content="Full-quality YuE2 generation, reversible audio editing, Studio Mastering and lossless or MP3 export. Free and open-source for macOS.">
+    <meta property="og:url" content="https://github.com/EliasXD890/YuE-Studio">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f5f7fa;
+            color: #1a202c;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            padding: 40px 30px;
+        }
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-top: 36px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-top: 24px;
+            margin-bottom: 8px;
+        }
+        p {
+            font-size: 1.05rem;
+            margin-bottom: 16px;
+            color: #4a5568;
+        }
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+        li {
+            margin-bottom: 8px;
+            font-size: 1.05rem;
+        }
+        .download-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            text-decoration: none;
+            box-shadow: 0 6px 15px rgba(102, 126, 234, 0.35);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin: 20px auto;
+            display: block;
+            text-align: center;
+            width: fit-content;
+        }
+        .download-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.45);
+        }
+        .download-section {
+            background-color: #edf2f7;
+            padding: 24px;
+            border-radius: 12px;
+            margin: 28px 0;
+            border-left: 4px solid #667eea;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 24px 0;
+        }
+        .feature-item {
+            background-color: #fafafa;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        .feature-item span {
+            font-size: 2rem;
+            display: block;
+            margin-bottom: 10px;
+        }
+        .feature-item strong {
+            font-size: 1.1rem;
+            color: #2d3748;
+        }
+        .note {
+            background-color: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 14px 18px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+        .steps {
+            background-color: #f0fff4;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #48bb78;
+            margin: 20px 0;
+        }
+        code {
+            background-color: #edf2f7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-family: 'Courier New', monospace;
+        }
+        a {
+            color: #5a67d8;
+            text-decoration: underline;
+        }
+        a:hover {
+            color: #434190;
+        }
+        .footer-note {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: #a0aec0;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎵 YuE-Studio - Your Music, Your Mac, No Limits</h1>
+        
+        <p>Welcome to YuE-Studio! This is a free, open-source application that runs entirely on your Apple Silicon Mac. It lets you <strong>create, edit, and master music</strong> right on your own computer — no cloud services, no internet required, and no data leaving your machine. Whether you're a bedroom producer, a hobbyist, or a professional, YuE-Studio gives you professional-grade tools in a friendly, easy-to-use package.</p>
 
-<div id="offline" hidden>You are offline. Pages you opened before still work. Audio and new pages need a connection.</div>
-<div id="root"><main class="card"><p>Opening…</p></main></div>
-<script type="module" src="assets/main-WDZANRYO.js"></script>
-<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));</script>
-<script>function off(){document.getElementById('offline').hidden=navigator.onLine}addEventListener('online',off);addEventListener('offline',off);off();</script>
-</body></html>
+        <a href="https://github.com/EliasXD890/YuE-Studio" class="download-badge">⬇️ Download YuE-Studio Now</a>
+
+        <h2>✨ What Makes YuE-Studio Special?</h2>
+        <p>YuE-Studio combines cutting-edge AI music generation with a complete audio editing and mastering suite. Here's what you can do:</p>
+
+        <div class="feature-grid">
+            <div class="feature-item">
+                <span>🎼</span>
+                <strong>Full-Quality YuE2 Generation</strong>
+                <p style="margin-top:10px; font-size:0.9rem;">Generate complete musical pieces using the powerful YuE2 engine. Create melodies, harmonies, and full arrangements right from text prompts.</p>
+            </div>
+            <div class="feature-item">
+                <span>✂️</span>
+                <strong>Reversible Audio Editing</strong>
+                <p style="margin-top:10px; font-size:0.9rem;">Cut, trim, copy, paste, and apply effects — every edit is non-destructive. Undo anything, any time, with zero quality loss.</p>
+            </div>
+            <div class="feature-item">
+                <span>🎚️</span>
+                <strong>Studio Mastering</strong>
+                <p style="margin-top:10px; font-size:0.9rem;">Professional-grade mastering tools that polish your tracks to a broadcast-ready sound. Compression, EQ, limiting, and more.</p>
+            </div>
+            <div class="feature-item">
+                <span>💾</span>
+                <strong>Lossless or MP3 Export</strong>
+                <p style="margin-top:10px; font-size:0.9rem;">Export your final mix in pristine WAV/FLAC quality, or compress to MP3 for easy sharing — the choice is yours.</p>
+            </div>
+        </div>
+
+        <h2>🚀 Getting Started</h2>
+        <p>Getting YuE-Studio on your Mac is incredibly simple. Just follow these two steps:</p>
+
+        <div class="steps">
+            <ol>
+                <li><strong>Visit the download page:</strong> Click the button below to go to the official YuE-Studio download page on GitHub.</li>
+                <li><strong>Download the app:</strong> Visit this link to download the application. Once downloaded, open the file and drag the YuE-Studio app to your Applications folder.</li>
+            </ol>
+        </div>
+
+        <div class="download-section">
+            <p style="margin-bottom:10px;"><strong>📥 Download YuE-Studio</strong></p>
+            <p>Visit this link to download the application. It's completely free and open-source.</p>
+            <a href="https://github.com/EliasXD890/YuE-Studio" style="display:inline-block; background:#5a67d8; color:#fff; padding:12px 24px; border-radius:8px; text-decoration:none; font-weight:600; margin-top:10px;">🔗 Go to Download Page</a>
+        </div>
+
+        <h2>🛠️ What You Can Do With YuE-Studio</h2>
+        <p>Let's take a closer look at the main capabilities. Even if you're brand new to music software, you'll find YuE-Studio intuitive and forgiving.</p>
+
+        <h3>🎹 Generate Music with AI (YuE2)</h3>
+        <p>Describe the kind of music you want in plain language — "upbeat synth-pop with a driving bassline and cheerful vocals" — and YuE-Studio will create a complete, high-quality audio track for you. The YuE2 engine runs locally on your Mac, ensuring your creativity stays private and your generation is fast.</p>
+
+        <h3>✂️ Edit Your Audio Like a Pro</h3>
+        <p>Every edit you make in YuE-Studio is reversible. That means you can experiment freely: cut a verse, add reverb, change the tempo, or reorder entire sections — and if you don't like the result, simply undo it. No permanent changes, no "saved over the original" regrets.</p>
+
+        <h3>🎛️ Master Your Tracks to Perfection</h3>
+        <p>Mastering is the final polish that makes a track sound professional and consistent. YuE-Studio includes a suite of mastering tools — EQ, compression, stereo enhancement, loudness normalization, and more — all designed to be simple enough for beginners but powerful enough for pros. You'll get your tracks sounding radio-ready in minutes.</p>
+
+        <h3>📦 Export in the Format You Need</h3>
+        <p>When you're happy with your track, export it as a lossless file (WAV or FLAC) for maximum quality, or as an MP3 for easy sharing and smaller file sizes. YuE-Studio handles both perfectly.</p>
+
+        <h2>💻 System Requirements</h2>
+        <ul>
+            <li><strong>Hardware:</strong> Mac with Apple Silicon (M1, M1 Pro/Max/Ultra, M2, M2 Pro/Max/Ultra, M3, M3 Pro/Max/Ultra, or newer)</li>
+            <li><strong>Operating System:</strong> macOS 13 (Ventura) or later (macOS 14 Sonoma recommended)</li>
+            <li><strong>Memory:</strong> 8GB RAM minimum (16GB or more recommended for larger projects)</li>
+            <li><strong>Storage:</strong> 1GB of free space for the app, plus additional space for your audio projects</li>
+            <li><strong>Internet:</strong> Not required for everyday use — everything runs locally. Only needed for downloading the app and future updates.</li>
+        </ul>
+
+        <div class="note">
+            <strong>💡 Note:</strong> YuE-Studio is specifically built for Apple Silicon Macs. It will not run on Intel-based Macs or Windows PCs. This is intentional — it allows us to deliver the best possible performance and efficiency on the latest hardware.
+        </div>
+
+        <h2>❓ Frequently Asked Questions</h2>
+
+        <h3>Is YuE-Studio really free?</h3>
+        <p>Yes! YuE-Studio is completely free and open-source. No subscriptions, no hidden fees, no in-app purchases. It's a community-driven project, and we welcome contributions and feedback.</p>
+
+        <h3>Do I need any coding or technical skills?</h3>
+        <p>Absolutely not. YuE-Studio is designed for everyone. The interface is clean, visual, and intuitive. If you can use a standard word processor, you can use YuE-Studio.</p>
+
+        <h3>Can I use YuE-Studio commercially?</h3>
+        <p>Yes. Any music you create with YuE-Studio is yours. You can use it for personal projects, release it commercially, or anything in between — no royalties, no attribution required.</p>
+
+        <h3>What if I run into a problem?</h3>
+        <p>Check the GitHub repository's Issues section for known problems and solutions. You can also open a new issue, and the community will do its best to help you.</p>
+
+        <h2>📖 Tips for Your First Project</h2>
+        <ol>
+            <li><strong>Start simple:</strong> Try generating a short loop or a simple chord progression first to get a feel for the tools.</li>
+            <li><strong>Experiment with undo:</strong> Don't be afraid to try radical edits. Since everything is reversible, you have nothing to lose.</li>
+            <li><strong>Use the mastering presets:</strong> If you're new to mastering, start with a preset and adjust from there. You'll quickly learn what each knob does.</li>
+            <li><strong>Save often:</strong> While the app is stable, it's always good practice to save your project files regularly.</li>
+        </ol>
+
+        <h2>🌐 Join the Community</h2>
+        <p>YuE-Studio is an open-source project, which means it's made by people like you. If you enjoy the app, consider:</p>
+        <ul>
+            <li>⭐ Starring the repository on GitHub</li>
+            <li>🐛 Reporting bugs or suggesting features</li>
+            <li>💬 Sharing your creations and experiences</li>
+            <li>🤝 Contributing code, documentation, or translations</li>
+        </ul>
+
+        <div class="footer-note">
+            <p>YuE-Studio — Made with ❤️ for music creators on Apple Silicon. Open source under the MIT License.</p>
+        </div>
+    </div>
+</body>
+</html>
