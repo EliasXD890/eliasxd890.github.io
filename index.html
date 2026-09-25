@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nalayira Divya Prabandham</title>
+<meta name="description" content="All 4,000 pasurams of the Alvars in Tamil and English, with taniyans, meanings, recitation audio and the 108 Divya Desams.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Nalayira Divya Prabandham">
+<meta property="og:title" content="Nalayira Divya Prabandham">
+<meta property="og:description" content="All 4,000 pasurams of the Alvars in Tamil and English, with taniyans, meanings, recitation audio and the 108 Divya Desams.">
+<meta property="og:url" content="https://divyaprabandam.github.io/">
+<meta property="og:image" content="https://media.divyaprabandam.workers.dev/media/ec827faa6ec7.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f3e3c7">
+<meta name="referrer" content="no-referrer">
+<script>(function(){var R='https://media.divyaprabandam.workers.dev/media/';
+function idOf(u){return u&&u.indexOf(R)===0?u.slice(R.length).split('?')[0]:null}
+function note(t){var d=document.getElementById('mnote');if(!d){d=document.createElement('div');d.id='mnote';d.setAttribute('role','status');d.style.cssText='position:fixed;left:50%;bottom:96px;transform:translateX(-50%);width:max-content;max-width:88vw;background:#3b2a1a;color:#fff;padding:10px 16px;border-radius:10px;font:15px/1.4 system-ui,sans-serif;z-index:99999;box-shadow:0 2px 10px rgba(0,0,0,.3)';document.body.appendChild(d);}d.textContent=t;clearTimeout(d._t);d._t=setTimeout(function(){d.remove()},6000);}
+var MSG='This recording is not available right now. Please try again in a little while.',DMSG='This file is not available right now. Please try again in a little while.';
+function fix(a){var s=a.currentSrc||a.src,id=idOf(s);if(!id)return;var t=a.currentTime||0,p=!a.paused||a.dataset.want;
+if(!a.dataset.r){a.dataset.r=1;a.src=R+id+'?r=1';a.load();try{a.currentTime=t}catch(e){}if(p)a.play().catch(function(){});return;}
+note(MSG);}
+document.addEventListener('error',function(e){var a=e.target;if(a instanceof HTMLMediaElement)fix(a);},true);
+var A=window.Audio;window.Audio=function(s){var a=new A(s);a.addEventListener('error',function(){fix(a)});a.addEventListener('playing',function(){delete a.dataset.r});return a;};window.Audio.prototype=A.prototype;
+document.addEventListener('playing',function(e){var a=e.target;if(a instanceof HTMLMediaElement)delete a.dataset.r;},true);
+document.addEventListener('click',function(e){var l=e.target.closest&&e.target.closest('a[href]');if(!l)return;var id=idOf(l.href);if(!id)return;e.preventDefault();var w=window.open('','_blank');
+var c=new AbortController(),tm=setTimeout(function(){c.abort()},8000);
+fetch(R+id,{method:'HEAD',cache:'no-store',signal:c.signal}).then(function(r){clearTimeout(tm);if(!r.ok)throw 0;w?w.location=R+id:location.href=R+id;}).catch(function(){if(w)w.close();note(DMSG);});},true);
+})();</script>
+<script>if(/^#?\/?(recite|learn|explore|search|sources)?\/?$/.test(location.hash)){var pl=document.createElement('link');pl.rel='preload';pl.as='image';pl.href='https://media.divyaprabandam.workers.dev/media/ec827faa6ec7.png';pl.setAttribute('fetchpriority','high');document.head.appendChild(pl);}</script>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/main-LPRYFDWB.css">
+<link rel="modulepreload" href="assets/main-WDZANRYO.js">
+</head><body>
+
+<div id="offline" hidden>You are offline. Pages you opened before still work. Audio and new pages need a connection.</div>
+<div id="root"><main class="card"><p>Opening…</p></main></div>
+<script type="module" src="assets/main-WDZANRYO.js"></script>
+<script>if('serviceWorker' in navigator)addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));</script>
+<script>function off(){document.getElementById('offline').hidden=navigator.onLine}addEventListener('online',off);addEventListener('offline',off);off();</script>
+</body></html>

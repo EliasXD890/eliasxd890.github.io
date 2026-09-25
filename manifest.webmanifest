@@ -1,0 +1,10 @@
+{
+  "name": "Nalayira Divya Prabandham",
+  "short_name": "Prabandham",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fdfaf2",
+  "theme_color": "#f3e3c7",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
