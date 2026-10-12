@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>⚡ 反应速度 · WarmJam 的小游戏</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #f0f4f8; min-height: 100vh;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { text-align: center; padding: 12px 0 20px; }
+  header h1 { font-size: 1.8rem; }
+  header a { color: #7d97a9; font-size: .85rem; text-decoration: none; }
+  header a:hover { color: #ffd93b; }
+  .screen.hidden { display: none; }
+  .card {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px; padding: 26px 22px; text-align: center;
+  }
+  .card p.desc { color: #b9cddb; font-size: .95rem; line-height: 1.7; margin-bottom: 20px; }
+  .diff-box { margin: 6px 0 22px; }
+  .diff-box label { font-size: .95rem; color: #cfe3ef; }
+  .diff-box label b { color: #ffd93b; font-size: 1.1rem; }
+  input[type=range] { width: 100%; margin: 14px 0 6px; accent-color: #ffd93b; }
+  .diff-tag { font-size: .85rem; color: #7d97a9; }
+  .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; border: none; cursor: pointer; text-decoration: none;
+    color: #0f2027; font-weight: 700; background: #ffd93b;
+    padding: 12px 30px; border-radius: 10px; font-size: 1rem;
+    transition: transform .15s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.ghost { background: transparent; color: #ffd93b; border: 1.5px solid #ffd93b; font-weight: 500; }
+  .btn:disabled { opacity: .5; cursor: default; transform: none; }
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; font-size: 1rem; color: #cfe3ef;
+  }
+  .hud b { color: #ffd93b; font-size: 1.25rem; margin-left: 6px; }
+  #rStatus {
+    text-align: center; font-size: 1.1rem; font-weight: 700; color: #ffd93b;
+    min-height: 1.8em; margin-bottom: 10px;
+  }
+  .r-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+    max-width: 430px; margin: 0 auto;
+  }
+  @media (max-width: 430px) { .r-grid { grid-template-columns: repeat(3, 1fr); } }
+  .r-btn {
+    aspect-ratio: 1/1; border: none; border-radius: 14px; cursor: pointer;
+    background: #2fbf71; color: #06281a; font-size: 1.1rem; font-weight: 800;
+    font-family: ui-monospace, SFMono-Regular, monospace;
+    transition: background .08s, transform .06s;
+    touch-action: manipulation; user-select: none; -webkit-user-select: none;
+  }
+  .r-btn.armed { background: #ff5252; color: #fff; transform: scale(1.05); }
+  .r-btn.done { background: rgba(255,255,255,.1); color: #9fb3c2; cursor: default; font-size: .8rem; }
+  @keyframes foulShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); } 75% { transform: translateX(5px); }
+  }
+  .r-btn.foul-flash { animation: foulShake .25s; }
+  .r-hint { text-align: center; color: #7d97a9; font-size: .8rem; margin-top: 12px; }
+  #over .card h2 { margin-bottom: 10px; }
+  #over .score-big { font-size: 2.6rem; color: #ffd93b; font-weight: 800; margin: 8px 0; }
+  #over .foul-line { color: #b9cddb; margin-bottom: 6px; }
+  #rankMsg { min-height: 1.6em; color: #b9cddb; margin-bottom: 14px; }
+  #rankMsg.good { color: #3ddc84; font-weight: 700; }
+  .nick-row { margin-bottom: 18px; color: #cfe3ef; font-size: .95rem; }
+  .nick-row input {
+    margin-left: 8px; padding: 8px 12px; border-radius: 8px; font-size: 1rem; width: 150px;
+    border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.3); color: #fff;
+  }
+  table.board { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: .85rem; }
+  table.board th, table.board td { padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  table.board th { color: #7d97a9; font-weight: 500; }
+  table.board tr.me td { color: #ffd93b; font-weight: 700; }
+  .empty { color: #7d97a9; padding: 24px 0; }
+  .hint { color: #7d97a9; font-size: .78rem; line-height: 1.6; margin-top: 10px; }
+  .back-row { margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>⚡ 反应速度</h1>
+    <a href="index.html">← 返回 WarmJam 的主页</a>
+  </header>
+
+  <!-- 菜单 -->
+  <div id="menu" class="screen">
+    <div class="card">
+      <p class="desc">12 个绿色按钮会<strong>随机逐个</strong>变红，在变红的瞬间点它！<br>
+      12 个全点完，按平均反应时间结算（精确到 0.001 秒）。<br>
+      点错绿色按钮算犯规，+1.000 秒。难度越高，等待越短。</p>
+      <div class="diff-box">
+        <label>难度 <b id="diffVal">5</b> <span class="diff-tag" id="diffTag"></span></label>
+        <input type="range" id="diff" min="1" max="10" value="5" step="1">
+      </div>
+      <div class="btns">
+        <button class="btn" id="startBtn">开始游戏</button>
+        <button class="btn ghost" id="recordsBtn">🏆 纪录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 排行榜 -->
+  <div id="records" class="screen hidden">
+    <div class="card">
+      <h2 style="margin-bottom:12px">🏆 最快纪录</h2>
+      <div id="board"></div>
+      <div class="back-row"><button class="btn ghost" id="backBtn">返回</button></div>
+    </div>
+  </div>
+
+  <!-- 游戏 -->
+  <div id="game" class="screen hidden">
+    <div class="hud">
+      <span>已完成<b id="hudDone">0/12</b></span>
+      <span>犯规<b id="hudFoul">0</b></span>
+    </div>
+    <p id="rStatus"></p>
+    <div class="r-grid" id="rGrid"></div>
+    <p class="r-hint">只点变红的按钮，点绿的会犯规</p>
+  </div>
+
+  <!-- 结算 -->
+  <div id="over" class="screen hidden">
+    <div class="card">
+      <h2>测试完成</h2>
+      <div class="score-big" id="finalScore">0.000 秒</div>
+      <p class="foul-line" id="foulLine"></p>
+      <p id="rankMsg"></p>
+      <div class="nick-row">昵称 <input id="nick" maxlength="16" placeholder="默认用设备识别码"></div>
+      <div class="btns">
+        <button class="btn" id="submitBtn">提交成绩</button>
+        <button class="btn ghost" id="retryBtn">再来一局</button>
+        <button class="btn ghost" id="menuBtn">返回菜单</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="leaderboard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var BIN_URL = 'https://api.npoint.io/ecbe01443f39a5a8caad'; // 反应速度全站排行榜
+  var N = 12, PENALTY_MS = 1000;
+
+  var board = WJBoard.create({
+    binUrl: BIN_URL,
+    localKey: 'wj_board_reaction',
+    lowerBetter: true,
+    decimals: 3,
+    scoreLabel: '平均用时(秒)'
+  });
+
+  function $(id) { return document.getElementById(id); }
+  function show(name) {
+    ['menu', 'records', 'game', 'over'].forEach(function (s) {
+      $(s).classList.toggle('hidden', s !== name);
+    });
+    window.scrollTo(0, 0);
+  }
+
+  // ---- 难度 ----
+  var diffInput = $('diff'), diffVal = $('diffVal'), diffTag = $('diffTag');
+  function diffName(d) {
+    if (d <= 2) return '入门'; if (d <= 4) return '简单';
+    if (d <= 6) return '普通'; if (d <= 8) return '困难'; return '地狱';
+  }
+  function refreshDiff() {
+    diffVal.textContent = diffInput.value;
+    diffTag.textContent = '· ' + diffName(+diffInput.value);
+  }
+  diffInput.addEventListener('input', refreshDiff);
+  refreshDiff();
+
+  // ---- 排行榜 ----
+  $('recordsBtn').addEventListener('click', function () {
+    show('records');
+    var el = $('board');
+    el.innerHTML = '<p class="empty">加载中…</p>';
+    board.load().then(function (res) { board.render(el, res.list, res.remote); });
+  });
+  $('backBtn').addEventListener('click', function () { show('menu'); });
+
+  // ---- 游戏 ----
+  var grid = $('rGrid'), statusEl = $('rStatus');
+  var btns = [], order = [], redIdx = -1, redTime = 0;
+  var done = 0, totalMs = 0, fouls = 0, timer = null, state = 'idle', diff = 5;
+
+  function shuffle(a) {
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function updateHud() {
+    $('hudDone').textContent = done + '/' + N;
+    $('hudFoul').textContent = fouls;
+  }
+  // 难度越高，两次变红之间的随机等待越短
+  function delayFor(d) {
+    var minD = 1000 - (d - 1) * 72;   // 1级1000ms → 10级约350ms
+    var maxD = 2200 - (d - 1) * 155;  // 1级2200ms → 10级约800ms
+    return minD + Math.random() * (maxD - minD);
+  }
+  function scheduleNext() {
+    state = 'waiting';
+    statusEl.textContent = '准备… 👀';
+    timer = setTimeout(function () {
+      redIdx = order[done];
+      btns[redIdx].classList.add('armed');
+      redTime = performance.now();
+      state = 'armed';
+      statusEl.textContent = '点它！';
+    }, delayFor(diff));
+  }
+  function onBtn(i) {
+    var b = btns[i];
+    if (b.classList.contains('done')) return;
+    if (state === 'armed' && i === redIdx) {
+      var rt = performance.now() - redTime; // 毫秒，含小数
+      totalMs += rt;
+      done++;
+      b.classList.remove('armed');
+      b.classList.add('done');
+      b.textContent = (rt / 1000).toFixed(3);
+      state = 'idle';
+      updateHud();
+      if (done >= N) { finish(); } else { scheduleNext(); }
+    } else {
+      // 犯规：点了绿色按钮
+      fouls++;
+      totalMs += PENALTY_MS;
+      b.classList.remove('foul-flash');
+      void b.offsetWidth;
+      b.classList.add('foul-flash');
+      statusEl.textContent = '犯规！+1.000 秒';
+      updateHud();
+    }
+  }
+  function startGame() {
+    diff = +diffInput.value;
+    order = shuffle(Array.apply(null, { length: N }).map(function (_, i) { return i; }));
+    done = 0; totalMs = 0; fouls = 0; redIdx = -1; state = 'idle';
+    clearTimeout(timer);
+    grid.innerHTML = '';
+    btns = [];
+    for (var i = 0; i < N; i++) {
+      (function (idx) {
+        var b = document.createElement('button');
+        b.className = 'r-btn';
+        b.textContent = idx + 1;
+        b.setAttribute('aria-label', '按钮' + (idx + 1));
+        b.addEventListener('click', function () { onBtn(idx); });
+        grid.appendChild(b);
+        btns.push(b);
+      })(i);
+    }
+    updateHud();
+    show('game');
+    scheduleNext();
+  }
+  function finish() {
+    clearTimeout(timer);
+    state = 'over';
+    var avg = totalMs / N / 1000; // 秒
+    var avgRound = Math.round(avg * 1000) / 1000;
+    show('over');
+    $('finalScore').textContent = avgRound.toFixed(3) + ' 秒';
+    $('foulLine').textContent = fouls ? ('犯规 ' + fouls + ' 次（含罚时）') : '零犯规，漂亮！';
+    $('rankMsg').textContent = '';
+    $('rankMsg').className = '';
+    var nickInput = $('nick');
+    if (!nickInput.value) nickInput.value = board.getName();
+    $('submitBtn').disabled = false;
+    $('submitBtn').onclick = function () {
+      var name = nickInput.value.trim() || board.pid;
+      board.saveName(nickInput.value.trim());
+      $('submitBtn').disabled = true;
+      $('rankMsg').textContent = '提交中…';
+      board.submit({ name: name, score: avgRound, diff: diff }).then(function (r) {
+        var msg = $('rankMsg');
+        if (r.rank >= 0) {
+          msg.textContent = r.remote
+            ? '🎉 上榜！全站第 ' + (r.rank + 1) + ' 名'
+            : '🎉 已记入本机纪录（离线）';
+          msg.className = 'good';
+        } else {
+          msg.textContent = r.remote ? '未进入前十，继续加油！' : '提交失败，已记入本机';
+          msg.className = '';
+        }
+      });
+    };
+  }
+
+  $('startBtn').addEventListener('click', startGame);
+  $('retryBtn').addEventListener('click', startGame);
+  $('menuBtn').addEventListener('click', function () { clearTimeout(timer); show('menu'); });
+})();
+</script>
+</body>
+</html>

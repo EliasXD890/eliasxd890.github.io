@@ -45,7 +45,20 @@
     return s;
   }
 
-  function sanitize(list) {
+  function roundScore(s, decimals) {
+    var n = Number(s);
+    if (!isFinite(n) || n < 0) return 0;
+    var f = Math.pow(10, decimals);
+    return Math.round(n * f) / f;
+  }
+  function cmpScore(a, b, lowerBetter) {
+    return lowerBetter ? (a.score - b.score) : (b.score - a.score);
+  }
+  function fmtScore(s, decimals) {
+    return decimals ? Number(s).toFixed(decimals) : String(s);
+  }
+
+  function sanitize(list, lowerBetter, decimals) {
     if (!Array.isArray(list)) return [];
     var out = [];
     for (var i = 0; i < list.length; i++) {
@@ -57,19 +70,19 @@
         pid: cleanStr(e.pid, 12) || '?',
         name: cleanStr(e.name, 16),
         device: cleanStr(e.device, 16) || '未知设备',
-        score: Math.floor(score),
+        score: roundScore(e.score, decimals),
         diff: Math.max(1, Math.min(10, parseInt(e.diff, 10) || 1)),
         date: cleanStr(e.date, 24)
       });
     }
-    out.sort(function (a, b) { return b.score - a.score; });
+    out.sort(function (a, b) { return cmpScore(a, b, lowerBetter); });
     return out.slice(0, MAX_ENTRIES);
   }
 
-  function loadLocal(key) {
+  function loadLocal(key, lowerBetter, decimals) {
     try {
       var arr = JSON.parse(localStorage.getItem(key));
-      return sanitize(arr);
+      return sanitize(arr, lowerBetter, decimals);
     } catch (e) { return []; }
   }
 
@@ -78,6 +91,10 @@
   }
 
   function create(opts) {
+    // lowerBetter: 分数越小越好（如反应速度）；decimals: 分数小数位；scoreLabel: 榜单表头
+    var lowerBetter = !!opts.lowerBetter;
+    var decimals = Math.max(0, Math.min(3, parseInt(opts.decimals, 10) || 0));
+    var scoreLabel = opts.scoreLabel || '分数';
     var api = {
       binUrl: opts.binUrl,
       localKey: opts.localKey || 'wj_board_local',
@@ -94,9 +111,9 @@
           if (!r.ok) throw new Error('http ' + r.status);
           return r.json();
         }).then(function (data) {
-          return { list: sanitize(data), remote: true };
+          return { list: sanitize(data, lowerBetter, decimals), remote: true };
         }).catch(function () {
-          return { list: loadLocal(self.localKey), remote: false };
+          return { list: loadLocal(self.localKey, lowerBetter, decimals), remote: false };
         });
       },
 
@@ -106,14 +123,14 @@
           pid: self.pid,
           name: cleanStr(entry.name, 16) || self.pid,
           device: self.device,
-          score: Math.floor(Number(entry.score)) || 0,
+          score: roundScore(entry.score, decimals),
           diff: Math.max(1, Math.min(10, parseInt(entry.diff, 10) || 1)),
           date: new Date().toISOString().slice(0, 19).replace('T', ' ')
         };
         return self.load().then(function (res) {
           var list = res.list.slice();
           list.push(item);
-          list.sort(function (a, b) { return b.score - a.score; });
+          list.sort(function (a, b) { return cmpScore(a, b, lowerBetter); });
           list = list.slice(0, MAX_ENTRIES);
           var rank = -1;
           for (var i = 0; i < list.length; i++) {
@@ -152,7 +169,7 @@
           var table = document.createElement('table');
           table.className = 'board';
           var head = document.createElement('tr');
-          ['名次', '玩家', '设备', '分数', '难度', '日期'].forEach(function (t) {
+          ['名次', '玩家', '设备', scoreLabel, '难度', '日期'].forEach(function (t) {
             var th = document.createElement('th');
             th.textContent = t;
             head.appendChild(th);
@@ -165,7 +182,7 @@
               medals[i] || ('第' + (i + 1) + '名'),
               e.name || e.pid,
               e.device,
-              String(e.score),
+              fmtScore(e.score, decimals),
               'Lv.' + e.diff,
               (e.date || '').slice(0, 10)
             ];
