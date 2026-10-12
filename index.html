@@ -88,6 +88,10 @@
     color: #fff; border: 1px solid rgba(255,255,255,.25); width: 44px; height: 44px;
     border-radius: 50%; font-size: 1.1rem; cursor: pointer;
   }
+  .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 640px) { .live-grid { grid-template-columns: 1fr; } }
+  .live-card .preview video { display: block; width: 100%; height: auto; }
+  .live-card h3 { margin-top: 14px; }
 </style>
 </head>
 <body>
@@ -156,6 +160,26 @@
       <p>香港之行：迪士尼城堡的夜、冰淇淋、雨后的小路，还有烧腊饭和菠萝包。</p>
       <div class="row" style="justify-content:center">
         <a class="btn" href="#" id="hkBtn">📷 点击查看我的香港旅行分享</a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>动态瞬间 · Live Photos</h2>
+    <div class="live-grid">
+      <div class="card live-card">
+        <div class="preview">
+          <video src="live-disney.mp4" poster="live-disney.jpg" autoplay loop muted playsinline></video>
+        </div>
+        <h3>🏰 香港迪士尼</h3>
+        <p>城堡灯光秀的夜晚 —— 自动循环播放中。</p>
+      </div>
+      <div class="card live-card">
+        <div class="preview">
+          <video src="live-qingdao.mp4" poster="live-qingdao.jpg" autoplay loop muted playsinline></video>
+        </div>
+        <h3>🌊 青岛浪花</h3>
+        <p>海浪拍上礁石的瞬间 —— 自动循环播放中。</p>
       </div>
     </div>
   </section>
