@@ -95,6 +95,7 @@
     var lowerBetter = !!opts.lowerBetter;
     var decimals = Math.max(0, Math.min(3, parseInt(opts.decimals, 10) || 0));
     var scoreLabel = opts.scoreLabel || '分数';
+    var hideDiff = !!opts.hideDiff; // 无难度设定的游戏隐藏"难度"列
     var api = {
       binUrl: opts.binUrl,
       localKey: opts.localKey || 'wj_board_local',
@@ -169,7 +170,10 @@
           var table = document.createElement('table');
           table.className = 'board';
           var head = document.createElement('tr');
-          ['名次', '玩家', '设备', scoreLabel, '难度', '日期'].forEach(function (t) {
+          var headers = ['名次', '玩家', '设备', scoreLabel];
+          if (!hideDiff) headers.push('难度');
+          headers.push('日期');
+          headers.forEach(function (t) {
             var th = document.createElement('th');
             th.textContent = t;
             head.appendChild(th);
@@ -183,9 +187,9 @@
               e.name || e.pid,
               e.device,
               fmtScore(e.score, decimals),
-              'Lv.' + e.diff,
               (e.date || '').slice(0, 10)
             ];
+            if (!hideDiff) cells.splice(4, 0, 'Lv.' + e.diff);
             cells.forEach(function (c) {
               var td = document.createElement('td');
               td.textContent = c;

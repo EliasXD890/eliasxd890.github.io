@@ -97,11 +97,7 @@
     <div class="card">
       <p class="desc">12 个绿色按钮会<strong>随机逐个</strong>变红，在变红的瞬间点它！<br>
       12 个全点完，按平均反应时间结算（精确到 0.001 秒）。<br>
-      点错绿色按钮算犯规，+1.000 秒。难度越高，等待越短。</p>
-      <div class="diff-box">
-        <label>难度 <b id="diffVal">5</b> <span class="diff-tag" id="diffTag"></span></label>
-        <input type="range" id="diff" min="1" max="10" value="5" step="1">
-      </div>
+      点错绿色按钮算犯规，+1.000 秒。所有人同一套规则，成绩直接可比。</p>
       <div class="btns">
         <button class="btn" id="startBtn">开始游戏</button>
         <button class="btn ghost" id="recordsBtn">🏆 纪录</button>
@@ -158,7 +154,8 @@
     localKey: 'wj_board_reaction',
     lowerBetter: true,
     decimals: 3,
-    scoreLabel: '平均用时(秒)'
+    scoreLabel: '平均用时(秒)',
+    hideDiff: true // 无难度，所有人同一套规则
   });
 
   function $(id) { return document.getElementById(id); }
@@ -168,19 +165,6 @@
     });
     window.scrollTo(0, 0);
   }
-
-  // ---- 难度 ----
-  var diffInput = $('diff'), diffVal = $('diffVal'), diffTag = $('diffTag');
-  function diffName(d) {
-    if (d <= 2) return '入门'; if (d <= 4) return '简单';
-    if (d <= 6) return '普通'; if (d <= 8) return '困难'; return '地狱';
-  }
-  function refreshDiff() {
-    diffVal.textContent = diffInput.value;
-    diffTag.textContent = '· ' + diffName(+diffInput.value);
-  }
-  diffInput.addEventListener('input', refreshDiff);
-  refreshDiff();
 
   // ---- 排行榜 ----
   $('recordsBtn').addEventListener('click', function () {
@@ -194,7 +178,7 @@
   // ---- 游戏 ----
   var grid = $('rGrid'), statusEl = $('rStatus');
   var btns = [], order = [], redIdx = -1, redTime = 0;
-  var done = 0, totalMs = 0, fouls = 0, timer = null, state = 'idle', diff = 5;
+  var done = 0, totalMs = 0, fouls = 0, timer = null, state = 'idle';
 
   function shuffle(a) {
     for (var i = a.length - 1; i > 0; i--) {
@@ -207,11 +191,9 @@
     $('hudDone').textContent = done + '/' + N;
     $('hudFoul').textContent = fouls;
   }
-  // 难度越高，两次变红之间的随机等待越短
-  function delayFor(d) {
-    var minD = 1000 - (d - 1) * 72;   // 1级1000ms → 10级约350ms
-    var maxD = 2200 - (d - 1) * 155;  // 1级2200ms → 10级约800ms
-    return minD + Math.random() * (maxD - minD);
+  // 所有人同一套：两次变红之间随机等待 700~1600ms
+  function nextDelay() {
+    return 700 + Math.random() * 900;
   }
   function scheduleNext() {
     state = 'waiting';
@@ -222,7 +204,7 @@
       redTime = performance.now();
       state = 'armed';
       statusEl.textContent = '点它！';
-    }, delayFor(diff));
+    }, nextDelay());
   }
   function onBtn(i) {
     var b = btns[i];
@@ -249,7 +231,6 @@
     }
   }
   function startGame() {
-    diff = +diffInput.value;
     order = shuffle(Array.apply(null, { length: N }).map(function (_, i) { return i; }));
     done = 0; totalMs = 0; fouls = 0; redIdx = -1; state = 'idle';
     clearTimeout(timer);
@@ -288,7 +269,7 @@
       board.saveName(nickInput.value.trim());
       $('submitBtn').disabled = true;
       $('rankMsg').textContent = '提交中…';
-      board.submit({ name: name, score: avgRound, diff: diff }).then(function (r) {
+      board.submit({ name: name, score: avgRound, diff: 5 }).then(function (r) {
         var msg = $('rankMsg');
         if (r.rank >= 0) {
           msg.textContent = r.remote
