@@ -143,6 +143,12 @@
         <a class="btn" href="#" id="hkBtn">📷 点击查看我的香港旅行分享</a>
       </div>
     </div>
+    <div class="card" style="text-align:center">
+      <p>青岛之行：海上日出、惊涛拍岸、花海听涛，还有沙滩上的悠闲时光。</p>
+      <div class="row" style="justify-content:center">
+        <a class="btn" href="#" id="qdBtn">📷 点击查看我的青岛旅行分享</a>
+      </div>
+    </div>
   </section>
 
   <section>
@@ -221,32 +227,73 @@
   <div class="film-hint">左右滑动或点击箭头浏览 · 点击空白处 / ✕ 关闭</div>
 </div>
 
+<!-- 青岛胶片 viewer -->
+<div class="film-modal" id="qdModal" role="dialog" aria-label="青岛旅行照片">
+  <button class="film-close" aria-label="关闭">✕</button>
+  <div class="film-strip">
+    <div class="sprockets"></div>
+    <div class="frames">
+      <figure class="frame">
+        <img src="qd-1.jpg" alt="青岛海上日出">
+        <figcaption>海上日出</figcaption>
+      </figure>
+      <figure class="frame">
+        <img src="qd-2.jpg" alt="海浪拍打礁石">
+        <figcaption>惊涛拍岸</figcaption>
+      </figure>
+      <figure class="frame">
+        <img src="qd-3.jpg" alt="海边的黄色野花">
+        <figcaption>花海听涛</figcaption>
+      </figure>
+      <figure class="frame">
+        <img src="qd-4.jpg" alt="礁石边留影">
+        <figcaption>礁石漫步</figcaption>
+      </figure>
+      <figure class="frame">
+        <img src="qd-5.jpg" alt="青岛沙滩">
+        <figcaption>沙滩悠闲</figcaption>
+      </figure>
+    </div>
+    <div class="sprockets"></div>
+  </div>
+  <div class="film-ui">
+    <button class="film-btn" aria-label="上一张">‹</button>
+    <button class="film-btn" aria-label="下一张">›</button>
+  </div>
+  <div class="film-hint">左右滑动或点击箭头浏览 · 点击空白处 / ✕ 关闭</div>
+</div>
+
 <script>
 (function () {
-  var modal = document.getElementById('filmModal');
-  var frames = document.getElementById('filmFrames');
-  document.getElementById('hkBtn').addEventListener('click', function (e) {
-    e.preventDefault();
-    modal.classList.add('open');
-    document.body.style.overflow = 'hidden';
-  });
-  function close() {
-    modal.classList.remove('open');
-    document.body.style.overflow = '';
+  function wireViewer(btnId, modalId) {
+    var modal = document.getElementById(modalId);
+    var frames = modal.querySelector('.frames');
+    var navBtns = modal.querySelectorAll('.film-btn');
+    document.getElementById(btnId).addEventListener('click', function (e) {
+      e.preventDefault();
+      modal.classList.add('open');
+      document.body.style.overflow = 'hidden';
+    });
+    function close() {
+      modal.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+    modal.querySelector('.film-close').addEventListener('click', close);
+    modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    function step() {
+      var f = frames.querySelector('.frame');
+      return f ? f.offsetWidth + 22 : 320;
+    }
+    navBtns[0].addEventListener('click', function () {
+      frames.scrollBy({ left: -step(), behavior: 'smooth' });
+    });
+    navBtns[1].addEventListener('click', function () {
+      frames.scrollBy({ left: step(), behavior: 'smooth' });
+    });
   }
-  document.getElementById('filmClose').addEventListener('click', close);
-  modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
-  function step() {
-    var f = frames.querySelector('.frame');
-    return f ? f.offsetWidth + 22 : 320;
-  }
-  document.getElementById('filmPrev').addEventListener('click', function () {
-    frames.scrollBy({ left: -step(), behavior: 'smooth' });
-  });
-  document.getElementById('filmNext').addEventListener('click', function () {
-    frames.scrollBy({ left: step(), behavior: 'smooth' });
-  });
+  wireViewer('hkBtn', 'filmModal');
+  wireViewer('qdBtn', 'qdModal');
 })();
 </script>
 <script src="js/echarts.min.js"></script>
