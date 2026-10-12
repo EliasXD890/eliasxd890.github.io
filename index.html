@@ -21,7 +21,8 @@
     background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16);
     padding: 6px 14px; border-radius: 999px; font-size: .85rem; color: #cfe3ef;
   }
-  section { margin-top: 48px; }
+  section { margin-top: 32px; }
+  section:first-of-type, section:last-of-type { margin-top: 48px; } /* 关于我、私人保险箱保持原间距 */
   section h2 {
     font-size: 1.4rem; margin-bottom: 18px; padding-left: 12px;
     border-left: 4px solid #ffd93b;
@@ -113,11 +114,20 @@
   }
   .live-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   @media (max-width: 640px) { .live-grid { grid-template-columns: 1fr; } }
+  /* ---- 横向滑动条（小游戏 / 动态瞬间）---- */
+  .h-strip {
+    display: flex; gap: 12px; overflow-x: auto; padding: 2px 2px 10px;
+    scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .h-strip::-webkit-scrollbar { display: none; }
+  .h-strip .btn { flex: 0 0 auto; scroll-snap-align: start; }
+  .h-strip .card { flex: 0 0 78%; max-width: 360px; margin-bottom: 0; scroll-snap-align: start; }
+  @media (min-width: 641px) { .h-strip .card { flex-basis: 320px; } }
   .live-card .preview video { display: block; width: 100%; height: auto; }
   .live-card h3 { margin-top: 14px; }
   /* ---- 我的足迹 ---- */
-  #footMap { width: 100%; height: 430px; margin-top: 6px; }
-  @media (max-width: 640px) { #footMap { height: 350px; } }
+  #footMap { width: 100%; height: 310px; margin-top: 6px; }
+  @media (max-width: 640px) { #footMap { height: 250px; } }
   .foot-stats { color: #cfe3ef; font-size: .95rem; text-align: center; margin-bottom: 4px; }
   .foot-stats b { color: #ffd93b; }
   .foot-info {
@@ -155,48 +165,24 @@
       <p class="foot-stats" id="footStats">🗺️ 加载中…</p>
       <div id="footMap"></div>
       <p class="foot-info" id="footInfo">👆 点击金色区域，看看是哪里</p>
-    </div>
-  </section>
-
-  <section>
-    <h2>旅行分享</h2>
-    <div class="card" style="text-align:center">
-      <p>香港之行：迪士尼城堡的夜、冰淇淋、雨后的小路，还有烧腊饭和菠萝包。</p>
-      <div class="row" style="justify-content:center">
-        <a class="btn" href="#" id="hkBtn">📷 点击查看我的香港旅行分享</a>
-      </div>
-    </div>
-    <div class="card" style="text-align:center">
-      <p>青岛之行：海上日出、惊涛拍岸、花海听涛，还有沙滩上的悠闲时光。</p>
-      <div class="row" style="justify-content:center">
-        <a class="btn" href="#" id="qdBtn">📷 点击查看我的青岛旅行分享</a>
+      <div class="row" style="justify-content:center;margin-top:10px">
+        <a class="btn ghost" href="#" id="hkBtn">📷 香港</a>
+        <a class="btn ghost" href="#" id="qdBtn">📷 青岛</a>
       </div>
     </div>
   </section>
 
   <section>
     <h2>小游戏区</h2>
-    <div class="live-grid">
-      <div class="card" style="text-align:center">
-        <h3>🐍 贪吃蛇</h3>
-        <p>经典贪吃蛇，可调难度，排行榜和全站玩家共享。</p>
-        <div class="row" style="justify-content:center">
-          <a class="btn" href="snake.html">开始玩</a>
-        </div>
-      </div>
-      <div class="card" style="text-align:center">
-        <h3>🧱 俄罗斯方块</h3>
-        <p>经典俄罗斯方块，可调难度，排行榜和全站玩家共享。</p>
-        <div class="row" style="justify-content:center">
-          <a class="btn" href="tetris.html">开始玩</a>
-        </div>
-      </div>
+    <div class="h-strip">
+      <a class="btn" href="snake.html">🐍 贪吃蛇</a>
+      <a class="btn" href="tetris.html">🧱 俄罗斯方块</a>
     </div>
   </section>
 
   <section>
     <h2>动态瞬间 · Live Photos</h2>
-    <div class="live-grid">
+    <div class="h-strip">
       <div class="card live-card">
         <div class="preview">
           <video src="live-disney.mp4" poster="live-disney.jpg" autoplay loop muted playsinline></video>
@@ -483,6 +469,8 @@
   Promise.all(files.map(function (f) {
     return fetch(f).then(function (r) { if (!r.ok) throw new Error(f); return r.json(); });
   })).then(function (all) {
+    // 裁掉台湾以南的南海群岛：过滤无名岛礁要素，并把视图南界收到 18°N（保留海南岛、台湾）
+    all[0].features = all[0].features.filter(function (ft) { return ft.properties.name !== ''; });
     echarts.registerMap('footBase', all[0]);
     var feats = [];
     all.forEach(function (gj) {
@@ -506,6 +494,7 @@
         map: 'footBase',
         roam: true,
         zoom: 1.28,
+        boundingCoords: [[73, 54], [136, 18]], // 北纬18°以南不显示，节省纵向空间
         scaleLimit: { min: 1, max: 14 },
         itemStyle: {
           areaColor: 'rgba(255,255,255,.05)',
