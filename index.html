@@ -132,7 +132,6 @@
       <p class="foot-stats" id="footStats">🗺️ 加载中…</p>
       <div id="footMap"></div>
       <p class="foot-info" id="footInfo">👆 点击金色区域，看看是哪里</p>
-      <p class="hint" style="text-align:center">金色闪烁的地方都是去过的 · 以后去了新城市，告诉 Jamistant 一声，这里就会多亮一块 ✨</p>
     </div>
   </section>
 
@@ -258,6 +257,7 @@
   var infoEl = document.getElementById('footInfo');
   var statsEl = document.getElementById('footStats');
   if (!mapEl) return;
+  var IS_TOUCH = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
 
   /* ----- 去过的城市名单（地级市精度）-----
      以后新增城市：在下面加一行即可，例如：
@@ -341,7 +341,7 @@
         map: 'footBase',
         roam: true,
         zoom: 1.28,
-        scaleLimit: { min: 1, max: 8 },
+        scaleLimit: { min: 1, max: 14 },
         itemStyle: {
           areaColor: 'rgba(255,255,255,.05)',
           borderColor: 'rgba(255,255,255,.22)',
@@ -352,6 +352,7 @@
         tooltip: { show: false }
       },
       tooltip: {
+        show: !IS_TOUCH, // 手机端关掉悬浮提示，避免遮挡干扰点选，只用下方信息条展示
         trigger: 'item',
         backgroundColor: 'rgba(10,20,26,.94)',
         borderColor: 'rgba(255,217,59,.5)',
@@ -389,9 +390,9 @@
           coordinateSystem: 'geo',
           geoIndex: 0,
           data: points,
-          symbolSize: 7,
+          symbolSize: 11,
           showEffectOn: 'render',
-          rippleEffect: { brushType: 'stroke', scale: 4.2, period: 2.4 },
+          rippleEffect: { brushType: 'stroke', scale: 5, period: 2.2 },
           itemStyle: { color: '#ffd93b', shadowBlur: 10, shadowColor: '#ffd93b' },
           tooltip: { show: false },
           zlevel: 2
@@ -403,6 +404,49 @@
       var v = byGeo[p.name];
       if (v) infoEl.textContent = '📍 ' + v.show + ' —— 去过 ✓';
     });
+    /* 手机端宽松轻点识别：手指轻点（位移<16px、<600ms）即算点击，
+       用像素反查经纬度 + 多边形命中判定，不依赖 ECharts 手势识别，
+       解决 roam 缩放/拖拽下小区域难以点中的问题 */
+    function inRing(lng, lat, ring) {
+      var inside = false;
+      for (var i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        var xi = ring[i][0], yi = ring[i][1], xj = ring[j][0], yj = ring[j][1];
+        if (((yi > lat) !== (yj > lat)) && (lng < (xj - xi) * (lat - yi) / (yj - yi) + xi)) inside = !inside;
+      }
+      return inside;
+    }
+    function inFeature(lng, lat, geom) {
+      if (geom.type === 'Polygon') return inRing(lng, lat, geom.coordinates[0]);
+      if (geom.type === 'MultiPolygon') {
+        for (var i = 0; i < geom.coordinates.length; i++) {
+          if (inRing(lng, lat, geom.coordinates[i][0])) return true;
+        }
+      }
+      return false;
+    }
+    var tS = null;
+    mapEl.addEventListener('touchstart', function (e) {
+      var t = e.changedTouches[0];
+      tS = { x: t.clientX, y: t.clientY, t: Date.now() };
+    }, { passive: true });
+    mapEl.addEventListener('touchend', function (e) {
+      if (!tS) return;
+      var t = e.changedTouches[0];
+      var dx = t.clientX - tS.x, dy = t.clientY - tS.y;
+      var dt = Date.now() - tS.t;
+      tS = null;
+      if (dx * dx + dy * dy > 256 || dt > 600) return; // 256 = 16px^2
+      var r = mapEl.getBoundingClientRect();
+      var ll = chart.convertFromPixel({ geoIndex: 0 }, [t.clientX - r.left, t.clientY - r.top]);
+      if (!ll) return;
+      for (var i = 0; i < feats.length; i++) {
+        if (inFeature(ll[0], ll[1], feats[i].geometry)) {
+          var v = byGeo[feats[i].properties.name];
+          if (v) infoEl.textContent = '📍 ' + v.show + ' —— 去过 ✓';
+          return;
+        }
+      }
+    }, { passive: true });
     window.addEventListener('resize', function () { chart.resize(); });
   }).catch(function () {
     fallback('地图数据加载失败，请检查网络后刷新。');
