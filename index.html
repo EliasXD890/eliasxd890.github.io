@@ -92,6 +92,15 @@
   @media (max-width: 640px) { .live-grid { grid-template-columns: 1fr; } }
   .live-card .preview video { display: block; width: 100%; height: auto; }
   .live-card h3 { margin-top: 14px; }
+  /* ---- 我的足迹 ---- */
+  #footMap { width: 100%; height: 430px; margin-top: 6px; }
+  @media (max-width: 640px) { #footMap { height: 350px; } }
+  .foot-stats { color: #cfe3ef; font-size: .95rem; text-align: center; margin-bottom: 4px; }
+  .foot-stats b { color: #ffd93b; }
+  .foot-info {
+    text-align: center; font-size: 1.05rem; color: #ffd93b; font-weight: 700;
+    min-height: 1.8em; margin-top: 6px;
+  }
 </style>
 </head>
 <body>
@@ -114,6 +123,16 @@
       <div class="row links">
         <a class="btn ghost" href="guestbook.html">💬 留言板</a>
       </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>我的足迹</h2>
+    <div class="card">
+      <p class="foot-stats" id="footStats">🗺️ 加载中…</p>
+      <div id="footMap"></div>
+      <p class="foot-info" id="footInfo">👆 点击金色区域，看看是哪里</p>
+      <p class="hint" style="text-align:center">金色闪烁的地方都是去过的 · 以后去了新城市，告诉 Jamistant 一声，这里就会多亮一块 ✨</p>
     </div>
   </section>
 
@@ -228,6 +247,165 @@
   });
   document.getElementById('filmNext').addEventListener('click', function () {
     frames.scrollBy({ left: step(), behavior: 'smooth' });
+  });
+})();
+</script>
+<script src="js/echarts.min.js"></script>
+<script>
+/* ============ 我的足迹 · 交互地图 ============ */
+(function () {
+  var mapEl = document.getElementById('footMap');
+  var infoEl = document.getElementById('footInfo');
+  var statsEl = document.getElementById('footStats');
+  if (!mapEl) return;
+
+  /* ----- 去过的城市名单（地级市精度）-----
+     以后新增城市：在下面加一行即可，例如：
+       { geo: '杭州市', prov: '浙江省', show: '浙江省杭州市' },
+     geo 必须与地图数据中的名称完全一致。直辖市/香港 show 只写自己。 */
+  var VISITED = [
+    { geo: '北京市', prov: '北京市', show: '北京市' },
+    { geo: '天津市', prov: '天津市', show: '天津市' },
+    { geo: '香港特别行政区', prov: '香港特别行政区', show: '香港特别行政区' },
+    { geo: '洛阳市', prov: '河南省', show: '河南省洛阳市' },
+    { geo: '南京市', prov: '江苏省', show: '江苏省南京市' },
+    { geo: '苏州市', prov: '江苏省', show: '江苏省苏州市' },
+    { geo: '无锡市', prov: '江苏省', show: '江苏省无锡市' },
+    { geo: '常州市', prov: '江苏省', show: '江苏省常州市' },
+    { geo: '镇江市', prov: '江苏省', show: '江苏省镇江市' },
+    { geo: '扬州市', prov: '江苏省', show: '江苏省扬州市' },
+    { geo: '青岛市', prov: '山东省', show: '山东省青岛市' },
+    { geo: '深圳市', prov: '广东省', show: '广东省深圳市' },
+    { geo: '合肥市', prov: '安徽省', show: '安徽省合肥市' },
+    { geo: '淮南市', prov: '安徽省', show: '安徽省淮南市' },
+    { geo: '滁州市', prov: '安徽省', show: '安徽省滁州市' },
+    { geo: '马鞍山市', prov: '安徽省', show: '安徽省马鞍山市' },
+    { geo: '芜湖市', prov: '安徽省', show: '安徽省芜湖市' },
+    { geo: '安庆市', prov: '安徽省', show: '安徽省安庆市' }
+  ];
+  var byGeo = {};
+  VISITED.forEach(function (v) { byGeo[v.geo] = v; });
+
+  function fallback(msg) {
+    statsEl.textContent = '🗺️ 足迹遍布 ' + distinctProvs() + ' 个省级地区 · 点亮 ' + VISITED.length + ' 座城市';
+    mapEl.innerHTML = '<p class="hint" style="text-align:center;padding:40px 0">' +
+      (msg || '地图加载失败') + '<br>去过：' +
+      VISITED.map(function (v) { return v.show; }).join('、') + '</p>';
+  }
+  function distinctProvs() {
+    var s = {};
+    VISITED.forEach(function (v) { s[v.prov] = 1; });
+    return Object.keys(s).length;
+  }
+
+  if (typeof echarts === 'undefined') { fallback('地图组件加载失败，请检查网络后刷新。'); return; }
+
+  function centroid(geom) {
+    var minX = 180, maxX = -180, minY = 90, maxY = -90;
+    (function walk(c) {
+      if (typeof c[0] === 'number') {
+        if (c[0] < minX) minX = c[0];
+        if (c[0] > maxX) maxX = c[0];
+        if (c[1] < minY) minY = c[1];
+        if (c[1] > maxY) maxY = c[1];
+      } else { for (var i = 0; i < c.length; i++) walk(c[i]); }
+    })(geom.coordinates);
+    return [(minX + maxX) / 2, (minY + maxY) / 2];
+  }
+
+  var files = ['maps/china.json', 'maps/pref-410000.json', 'maps/pref-320000.json',
+               'maps/pref-370000.json', 'maps/pref-440000.json', 'maps/pref-340000.json'];
+  Promise.all(files.map(function (f) {
+    return fetch(f).then(function (r) { if (!r.ok) throw new Error(f); return r.json(); });
+  })).then(function (all) {
+    echarts.registerMap('footBase', all[0]);
+    var feats = [];
+    all.forEach(function (gj) {
+      gj.features.forEach(function (ft) {
+        if (byGeo[ft.properties.name]) feats.push(ft);
+      });
+    });
+    if (!feats.length) { fallback('未匹配到任何去过的城市。'); return; }
+    echarts.registerMap('footVisited', { type: 'FeatureCollection', features: feats });
+
+    var points = feats.map(function (ft) {
+      var c = centroid(ft.geometry);
+      return { name: ft.properties.name, value: [c[0], c[1]] };
+    });
+
+    statsEl.innerHTML = '🗺️ 足迹遍布 <b>' + distinctProvs() + '</b> 个省级地区 · 点亮 <b>' + VISITED.length + '</b> 座城市';
+
+    var chart = echarts.init(mapEl);
+    chart.setOption({
+      geo: {
+        map: 'footBase',
+        roam: true,
+        zoom: 1.28,
+        scaleLimit: { min: 1, max: 8 },
+        itemStyle: {
+          areaColor: 'rgba(255,255,255,.05)',
+          borderColor: 'rgba(255,255,255,.22)',
+          borderWidth: 1
+        },
+        emphasis: { disabled: true },
+        select: { disabled: true },
+        tooltip: { show: false }
+      },
+      tooltip: {
+        trigger: 'item',
+        backgroundColor: 'rgba(10,20,26,.94)',
+        borderColor: 'rgba(255,217,59,.5)',
+        borderWidth: 1,
+        textStyle: { color: '#f0f4f8', fontSize: 13 },
+        formatter: function (p) {
+          if (p.seriesName === 'visited') {
+            var v = byGeo[p.name];
+            return '📍 ' + (v ? v.show : p.name) + '<br/><span style="color:#3ddc84">去过 ✓</span>';
+          }
+          return p.name;
+        }
+      },
+      series: [
+        {
+          name: 'visited',
+          type: 'map',
+          map: 'footVisited',
+          geoIndex: 0,
+          data: VISITED.map(function (v) { return { name: v.geo, value: 1 }; }),
+          itemStyle: {
+            areaColor: 'rgba(255,217,59,.55)',
+            borderColor: '#ffd93b',
+            borderWidth: 1.6
+          },
+          emphasis: {
+            itemStyle: { areaColor: 'rgba(255,217,59,.9)' },
+            label: { show: true, color: '#0f2027', fontWeight: 700, fontSize: 11 }
+          },
+          select: { disabled: true }
+        },
+        {
+          name: 'pulse',
+          type: 'effectScatter',
+          coordinateSystem: 'geo',
+          geoIndex: 0,
+          data: points,
+          symbolSize: 7,
+          showEffectOn: 'render',
+          rippleEffect: { brushType: 'stroke', scale: 4.2, period: 2.4 },
+          itemStyle: { color: '#ffd93b', shadowBlur: 10, shadowColor: '#ffd93b' },
+          tooltip: { show: false },
+          zlevel: 2
+        }
+      ]
+    });
+
+    chart.on('click', function (p) {
+      var v = byGeo[p.name];
+      if (v) infoEl.textContent = '📍 ' + v.show + ' —— 去过 ✓';
+    });
+    window.addEventListener('resize', function () { chart.resize(); });
+  }).catch(function () {
+    fallback('地图数据加载失败，请检查网络后刷新。');
   });
 })();
 </script>
