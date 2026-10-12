@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🐍 贪吃蛇 · WarmJam 的小游戏</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #f0f4f8; min-height: 100vh;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { text-align: center; padding: 12px 0 20px; }
+  header h1 { font-size: 1.8rem; }
+  header a { color: #7d97a9; font-size: .85rem; text-decoration: none; }
+  header a:hover { color: #ffd93b; }
+  .screen.hidden { display: none; }
+  .card {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px; padding: 26px 22px; text-align: center;
+  }
+  .card p.desc { color: #b9cddb; font-size: .95rem; line-height: 1.7; margin-bottom: 20px; }
+  .diff-box { margin: 6px 0 22px; }
+  .diff-box label { font-size: .95rem; color: #cfe3ef; }
+  .diff-box label b { color: #ffd93b; font-size: 1.1rem; }
+  input[type=range] { width: 100%; margin: 14px 0 6px; accent-color: #ffd93b; }
+  .diff-tag { font-size: .85rem; color: #7d97a9; }
+  .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; border: none; cursor: pointer; text-decoration: none;
+    color: #0f2027; font-weight: 700; background: #ffd93b;
+    padding: 12px 30px; border-radius: 10px; font-size: 1rem;
+    transition: transform .15s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.ghost { background: transparent; color: #ffd93b; border: 1.5px solid #ffd93b; font-weight: 500; }
+  .btn:disabled { opacity: .5; cursor: default; transform: none; }
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; font-size: 1rem; color: #cfe3ef;
+  }
+  .hud b { color: #ffd93b; font-size: 1.25rem; margin-left: 6px; }
+  .hud button {
+    background: rgba(255,255,255,.08); color: #f0e6c8; border: 1px solid rgba(255,255,255,.25);
+    width: 42px; height: 42px; border-radius: 50%; font-size: 1.1rem; cursor: pointer;
+  }
+  canvas#cv {
+    display: block; width: 100%; max-width: 400px; aspect-ratio: 1/1; margin: 0 auto;
+    background: #0a141a; border-radius: 12px; border: 1px solid rgba(255,255,255,.12);
+    touch-action: none;
+  }
+  .dpad { display: grid; grid-template-columns: repeat(3, 64px); gap: 8px; justify-content: center; margin-top: 16px; }
+  .dpad button {
+    width: 64px; height: 56px; border-radius: 12px; font-size: 1.4rem;
+    background: rgba(255,255,255,.08); color: #f0e6c8; border: 1px solid rgba(255,255,255,.2);
+    cursor: pointer; touch-action: none; user-select: none;
+  }
+  .dpad button:active { background: rgba(255,217,59,.25); }
+  .dpad .spacer { visibility: hidden; }
+  .kbd-hint { text-align: center; color: #7d97a9; font-size: .8rem; margin-top: 12px; }
+  #over .card h2 { margin-bottom: 10px; }
+  #over .score-big { font-size: 2.6rem; color: #ffd93b; font-weight: 800; margin: 8px 0; }
+  #rankMsg { min-height: 1.6em; color: #b9cddb; margin-bottom: 14px; }
+  #rankMsg.good { color: #3ddc84; font-weight: 700; }
+  .nick-row { margin-bottom: 18px; color: #cfe3ef; font-size: .95rem; }
+  .nick-row input {
+    margin-left: 8px; padding: 8px 12px; border-radius: 8px; font-size: 1rem; width: 150px;
+    border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.3); color: #fff;
+  }
+  table.board { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: .85rem; }
+  table.board th, table.board td { padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  table.board th { color: #7d97a9; font-weight: 500; }
+  table.board tr.me td { color: #ffd93b; font-weight: 700; }
+  .empty { color: #7d97a9; padding: 24px 0; }
+  .hint { color: #7d97a9; font-size: .78rem; line-height: 1.6; margin-top: 10px; }
+  .back-row { margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🐍 贪吃蛇</h1>
+    <a href="index.html">← 返回 WarmJam 的主页</a>
+  </header>
+
+  <!-- 菜单 -->
+  <div id="menu" class="screen">
+    <div class="card">
+      <p class="desc">吃掉红色食物变长，别撞墙、也别咬到自己。<br>难度越高，蛇跑得越快。</p>
+      <div class="diff-box">
+        <label>难度 <b id="diffVal">5</b> <span class="diff-tag" id="diffTag"></span></label>
+        <input type="range" id="diff" min="1" max="10" value="5" step="1">
+      </div>
+      <div class="btns">
+        <button class="btn" id="startBtn">开始游戏</button>
+        <button class="btn ghost" id="recordsBtn">🏆 纪录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 排行榜 -->
+  <div id="records" class="screen hidden">
+    <div class="card">
+      <h2 style="margin-bottom:12px">🏆 历史最高纪录</h2>
+      <div id="board"></div>
+      <div class="back-row"><button class="btn ghost" id="backBtn">返回</button></div>
+    </div>
+  </div>
+
+  <!-- 游戏 -->
+  <div id="game" class="screen hidden">
+    <div class="hud">
+      <span>得分<b id="score">0</b></span>
+      <span>长度<b id="len">1</b></span>
+      <button id="pauseBtn" aria-label="暂停">⏸</button>
+    </div>
+    <canvas id="cv" width="400" height="400"></canvas>
+    <div class="dpad">
+      <span class="spacer"></span><button data-dir="up" aria-label="上">▲</button><span class="spacer"></span>
+      <button data-dir="left" aria-label="左">◀</button><button data-dir="down" aria-label="下">▼</button><button data-dir="right" aria-label="右">▶</button>
+    </div>
+    <p class="kbd-hint">电脑：方向键 / WASD 操作，P 暂停 · 手机：滑动屏幕或点方向键</p>
+  </div>
+
+  <!-- 结算 -->
+  <div id="over" class="screen hidden">
+    <div class="card">
+      <h2>游戏结束</h2>
+      <div class="score-big" id="finalScore">0</div>
+      <p id="rankMsg"></p>
+      <div class="nick-row">昵称 <input id="nick" maxlength="16" placeholder="默认用设备识别码"></div>
+      <div class="btns">
+        <button class="btn" id="submitBtn">提交成绩</button>
+        <button class="btn ghost" id="retryBtn">再来一局</button>
+        <button class="btn ghost" id="menuBtn">返回菜单</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="leaderboard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var BIN_URL = 'https://api.npoint.io/048873de2608f9e9744c';
+  var board = WJBoard.create({ binUrl: BIN_URL, localKey: 'wj_board_snake' });
+
+  var N = 20, CELL = 400 / N;
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  if (!ctx.roundRect) {
+    ctx.roundRect = function (x, y, w, h) { this.rect(x, y, w, h); };
+  }
+
+  var screens = {
+    menu: document.getElementById('menu'),
+    records: document.getElementById('records'),
+    game: document.getElementById('game'),
+    over: document.getElementById('over')
+  };
+  function show(name) {
+    Object.keys(screens).forEach(function (k) { screens[k].classList.toggle('hidden', k !== name); });
+  }
+
+  // ---- 难度 ----
+  var diffInput = document.getElementById('diff'),
+      diffVal = document.getElementById('diffVal'),
+      diffTag = document.getElementById('diffTag');
+  function diffName(d) {
+    if (d <= 2) return '入门'; if (d <= 4) return '简单';
+    if (d <= 6) return '普通'; if (d <= 8) return '困难'; return '地狱';
+  }
+  function refreshDiff() {
+    diffVal.textContent = diffInput.value;
+    diffTag.textContent = '· ' + diffName(+diffInput.value);
+  }
+  diffInput.addEventListener('input', refreshDiff);
+  refreshDiff();
+
+  // ---- 游戏状态 ----
+  var snake, dir, queue, food, score, timer, alive, paused, diff;
+
+  function speed() { return 175 - diff * 12; } // Lv1:163ms → Lv10:55ms
+
+  function placeFood() {
+    while (true) {
+      var x = Math.floor(Math.random() * N), y = Math.floor(Math.random() * N);
+      var clash = false;
+      for (var i = 0; i < snake.length; i++) {
+        if (snake[i].x === x && snake[i].y === y) { clash = true; break; }
+      }
+      if (!clash) { food = { x: x, y: y }; return; }
+    }
+  }
+
+  function reset() {
+    snake = [{ x: 9, y: 10 }, { x: 8, y: 10 }, { x: 7, y: 10 }];
+    dir = { x: 1, y: 0 }; queue = [];
+    score = 0; alive = true; paused = false;
+    document.getElementById('pauseBtn').textContent = '⏸';
+    placeFood();
+    updateHud();
+  }
+
+  function updateHud() {
+    document.getElementById('score').textContent = score;
+    document.getElementById('len').textContent = snake.length;
+  }
+
+  function draw() {
+    ctx.fillStyle = '#0a141a';
+    ctx.fillRect(0, 0, 400, 400);
+    ctx.strokeStyle = 'rgba(255,255,255,.04)';
+    ctx.lineWidth = 1;
+    for (var g = 1; g < N; g++) {
+      ctx.beginPath(); ctx.moveTo(g * CELL, 0); ctx.lineTo(g * CELL, 400); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, g * CELL); ctx.lineTo(400, g * CELL); ctx.stroke();
+    }
+    // 食物
+    ctx.fillStyle = '#ff5a6e';
+    ctx.beginPath();
+    ctx.arc(food.x * CELL + CELL / 2, food.y * CELL + CELL / 2, CELL * 0.38, 0, Math.PI * 2);
+    ctx.fill();
+    // 蛇
+    for (var i = snake.length - 1; i >= 0; i--) {
+      var s = snake[i];
+      ctx.fillStyle = i === 0 ? '#3ddc84' : 'rgba(61,220,132,' + (0.9 - i / snake.length * 0.5) + ')';
+      var pad = i === 0 ? 1.5 : 2.5;
+      ctx.beginPath();
+      ctx.roundRect(s.x * CELL + pad, s.y * CELL + pad, CELL - pad * 2, CELL - pad * 2, 5);
+      ctx.fill();
+    }
+    if (paused) {
+      ctx.fillStyle = 'rgba(0,0,0,.55)';
+      ctx.fillRect(0, 0, 400, 400);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 28px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('已暂停', 200, 210);
+    }
+  }
+
+  function tick() {
+    if (!alive || paused) return;
+    if (queue.length) {
+      var nd = queue.shift();
+      if (!(nd.x === -dir.x && nd.y === -dir.y)) dir = nd;
+    }
+    var head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+    // 撞墙
+    if (head.x < 0 || head.y < 0 || head.x >= N || head.y >= N) return die();
+    // 咬到自己（尾巴即将移开的那格不算，除非吃到食物）
+    var eat = (head.x === food.x && head.y === food.y);
+    var body = eat ? snake : snake.slice(0, -1);
+    for (var i = 0; i < body.length; i++) {
+      if (body[i].x === head.x && body[i].y === head.y) return die();
+    }
+    snake.unshift(head);
+    if (eat) {
+      score += 10;
+      placeFood();
+    } else {
+      snake.pop();
+    }
+    updateHud();
+    draw();
+  }
+
+  function die() {
+    alive = false;
+    clearInterval(timer);
+    draw();
+    setTimeout(gameOver, 350);
+  }
+
+  function startGame() {
+    diff = +diffInput.value;
+    reset();
+    show('game');
+    draw();
+    clearInterval(timer);
+    timer = setInterval(tick, speed());
+  }
+
+  function togglePause() {
+    if (!alive) return;
+    paused = !paused;
+    document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸';
+    draw();
+  }
+
+  // ---- 输入 ----
+  var DIRS = {
+    up: { x: 0, y: -1 }, down: { x: 0, y: 1 },
+    left: { x: -1, y: 0 }, right: { x: 1, y: 0 }
+  };
+  function pushDir(name) {
+    var nd = DIRS[name];
+    if (!nd || !alive || paused) return;
+    var last = queue.length ? queue[queue.length - 1] : dir;
+    if (nd.x === -last.x && nd.y === -last.y) return; // 禁止180°掉头
+    if (nd.x === last.x && nd.y === last.y) return;
+    if (queue.length < 3) queue.push(nd);
+  }
+
+  document.addEventListener('keydown', function (e) {
+    var map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+                w: 'up', s: 'down', a: 'left', d: 'right', W: 'up', S: 'down', A: 'left', D: 'right' };
+    if (map[e.key]) {
+      if (!screens.game.classList.contains('hidden')) e.preventDefault();
+      pushDir(map[e.key]);
+    } else if (e.key === 'p' || e.key === 'P') {
+      if (!screens.game.classList.contains('hidden')) togglePause();
+    }
+  });
+
+  // 滑动
+  var tx = 0, ty = 0;
+  cv.addEventListener('touchstart', function (e) {
+    var t = e.changedTouches[0]; tx = t.clientX; ty = t.clientY;
+  }, { passive: true });
+  cv.addEventListener('touchend', function (e) {
+    var t = e.changedTouches[0];
+    var dx = t.clientX - tx, dy = t.clientY - ty;
+    if (Math.abs(dx) < 18 && Math.abs(dy) < 18) return;
+    pushDir(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up'));
+  }, { passive: true });
+
+  // 方向键按钮
+  document.querySelectorAll('.dpad button').forEach(function (b) {
+    var fn = function (e) { e.preventDefault(); pushDir(b.getAttribute('data-dir')); };
+    b.addEventListener('touchstart', fn, { passive: false });
+    b.addEventListener('mousedown', fn);
+  });
+
+  document.getElementById('pauseBtn').addEventListener('click', togglePause);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && alive && !paused && !screens.game.classList.contains('hidden')) togglePause();
+  });
+
+  // ---- 结算 ----
+  var nickInput = document.getElementById('nick'),
+      submitBtn = document.getElementById('submitBtn'),
+      rankMsg = document.getElementById('rankMsg');
+
+  function gameOver() {
+    document.getElementById('finalScore').textContent = score;
+    rankMsg.textContent = '';
+    rankMsg.className = '';
+    nickInput.value = board.getName() || board.pid;
+    submitBtn.disabled = false;
+    submitBtn.textContent = '提交成绩';
+    show('over');
+  }
+
+  submitBtn.addEventListener('click', function () {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '提交中…';
+    var name = nickInput.value.trim() || board.pid;
+    board.saveName(name);
+    board.submit({ name: name, score: score, diff: diff }).then(function (r) {
+      if (r.rank >= 0) {
+        rankMsg.textContent = '🎉 恭喜！第 ' + (r.rank + 1) + ' 名，已记入' + (r.remote ? '全站' : '本地') + '排行榜！';
+        rankMsg.className = 'good';
+      } else {
+        rankMsg.textContent = r.remote ? '未进入前十，再接再厉！' : '成绩已保存到本地（网络未连接，未同步全站榜）。';
+      }
+      submitBtn.textContent = '已提交';
+    });
+  });
+
+  // ---- 按钮 ----
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('retryBtn').addEventListener('click', startGame);
+  document.getElementById('menuBtn').addEventListener('click', function () { show('menu'); });
+  document.getElementById('recordsBtn').addEventListener('click', function () {
+    show('records');
+    var el = document.getElementById('board');
+    el.innerHTML = '<p class="empty">加载中…</p>';
+    board.load().then(function (res) { board.render(el, res.list, res.remote); });
+  });
+  document.getElementById('backBtn').addEventListener('click', function () { show('menu'); });
+})();
+</script>
+</body>
+</html>

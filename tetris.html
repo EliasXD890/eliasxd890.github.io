@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🧱 俄罗斯方块 · WarmJam 的小游戏</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: #f0f4f8; min-height: 100vh;
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { text-align: center; padding: 12px 0 20px; }
+  header h1 { font-size: 1.8rem; }
+  header a { color: #7d97a9; font-size: .85rem; text-decoration: none; }
+  header a:hover { color: #ffd93b; }
+  .screen.hidden { display: none; }
+  .card {
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.1);
+    border-radius: 14px; padding: 26px 22px; text-align: center;
+  }
+  .card p.desc { color: #b9cddb; font-size: .95rem; line-height: 1.7; margin-bottom: 20px; }
+  .diff-box { margin: 6px 0 22px; }
+  .diff-box label { font-size: .95rem; color: #cfe3ef; }
+  .diff-box label b { color: #ffd93b; font-size: 1.1rem; }
+  input[type=range] { width: 100%; margin: 14px 0 6px; accent-color: #ffd93b; }
+  .diff-tag { font-size: .85rem; color: #7d97a9; }
+  .btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; border: none; cursor: pointer; text-decoration: none;
+    color: #0f2027; font-weight: 700; background: #ffd93b;
+    padding: 12px 30px; border-radius: 10px; font-size: 1rem;
+    transition: transform .15s;
+  }
+  .btn:hover { transform: translateY(-2px); }
+  .btn.ghost { background: transparent; color: #ffd93b; border: 1.5px solid #ffd93b; font-weight: 500; }
+  .btn:disabled { opacity: .5; cursor: default; transform: none; }
+  .hud {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px; font-size: 1rem; color: #cfe3ef;
+  }
+  .hud b { color: #ffd93b; font-size: 1.25rem; margin-left: 6px; }
+  .hud button {
+    background: rgba(255,255,255,.08); color: #f0e6c8; border: 1px solid rgba(255,255,255,.25);
+    width: 42px; height: 42px; border-radius: 50%; font-size: 1.1rem; cursor: pointer;
+  }
+  .play { display: flex; gap: 12px; justify-content: center; align-items: flex-start; }
+  canvas#cv {
+    display: block; width: min(62vw, 240px); height: auto;
+    background: #0a141a; border-radius: 12px; border: 1px solid rgba(255,255,255,.12);
+    touch-action: none;
+  }
+  .side { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+  .side .lbl { font-size: .78rem; color: #7d97a9; }
+  canvas#next { width: 88px; height: 88px; background: #0a141a; border-radius: 10px; border: 1px solid rgba(255,255,255,.12); }
+  .tbtns { display: grid; grid-template-columns: repeat(5, 60px); gap: 8px; justify-content: center; margin-top: 16px; }
+  .tbtns button {
+    height: 56px; border-radius: 12px; font-size: 1.3rem;
+    background: rgba(255,255,255,.08); color: #f0e6c8; border: 1px solid rgba(255,255,255,.2);
+    cursor: pointer; touch-action: none; user-select: none;
+  }
+  .tbtns button:active { background: rgba(255,217,59,.25); }
+  .kbd-hint { text-align: center; color: #7d97a9; font-size: .8rem; margin-top: 12px; line-height: 1.7; }
+  #over .card h2 { margin-bottom: 10px; }
+  #over .score-big { font-size: 2.6rem; color: #ffd93b; font-weight: 800; margin: 8px 0; }
+  #over .lines { color: #b9cddb; margin-bottom: 6px; }
+  #rankMsg { min-height: 1.6em; color: #b9cddb; margin-bottom: 14px; }
+  #rankMsg.good { color: #3ddc84; font-weight: 700; }
+  .nick-row { margin-bottom: 18px; color: #cfe3ef; font-size: .95rem; }
+  .nick-row input {
+    margin-left: 8px; padding: 8px 12px; border-radius: 8px; font-size: 1rem; width: 150px;
+    border: 1px solid rgba(255,255,255,.25); background: rgba(0,0,0,.3); color: #fff;
+  }
+  table.board { width: 100%; border-collapse: collapse; margin: 8px 0 4px; font-size: .85rem; }
+  table.board th, table.board td { padding: 8px 4px; border-bottom: 1px solid rgba(255,255,255,.08); }
+  table.board th { color: #7d97a9; font-weight: 500; }
+  table.board tr.me td { color: #ffd93b; font-weight: 700; }
+  .empty { color: #7d97a9; padding: 24px 0; }
+  .hint { color: #7d97a9; font-size: .78rem; line-height: 1.6; margin-top: 10px; }
+  .back-row { margin-top: 18px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🧱 俄罗斯方块</h1>
+    <a href="index.html">← 返回 WarmJam 的主页</a>
+  </header>
+
+  <!-- 菜单 -->
+  <div id="menu" class="screen">
+    <div class="card">
+      <p class="desc">经典俄罗斯方块：凑满一行即消除。<br>难度越高，方块下落越快、计分倍率越高。</p>
+      <div class="diff-box">
+        <label>难度 <b id="diffVal">5</b> <span class="diff-tag" id="diffTag"></span></label>
+        <input type="range" id="diff" min="1" max="10" value="5" step="1">
+      </div>
+      <div class="btns">
+        <button class="btn" id="startBtn">开始游戏</button>
+        <button class="btn ghost" id="recordsBtn">🏆 纪录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 排行榜 -->
+  <div id="records" class="screen hidden">
+    <div class="card">
+      <h2 style="margin-bottom:12px">🏆 历史最高纪录</h2>
+      <div id="board"></div>
+      <div class="back-row"><button class="btn ghost" id="backBtn">返回</button></div>
+    </div>
+  </div>
+
+  <!-- 游戏 -->
+  <div id="game" class="screen hidden">
+    <div class="hud">
+      <span>得分<b id="score">0</b></span>
+      <span>消除<b id="lines">0</b></span>
+      <button id="pauseBtn" aria-label="暂停">⏸</button>
+    </div>
+    <div class="play">
+      <canvas id="cv" width="240" height="480"></canvas>
+      <div class="side">
+        <div class="lbl">下一个</div>
+        <canvas id="next" width="88" height="88"></canvas>
+      </div>
+    </div>
+    <div class="tbtns">
+      <button data-act="left" aria-label="左移">◀</button>
+      <button data-act="right" aria-label="右移">▶</button>
+      <button data-act="rot" aria-label="旋转">⟳</button>
+      <button data-act="down" aria-label="加速下落">▼</button>
+      <button data-act="drop" aria-label="直接落下">⤓</button>
+    </div>
+    <p class="kbd-hint">电脑：←→ 移动，↑ 旋转，↓ 加速，空格 直接落下，P 暂停<br>手机：点下方按钮操作</p>
+  </div>
+
+  <!-- 结算 -->
+  <div id="over" class="screen hidden">
+    <div class="card">
+      <h2>游戏结束</h2>
+      <div class="score-big" id="finalScore">0</div>
+      <p class="lines" id="finalLines"></p>
+      <p id="rankMsg"></p>
+      <div class="nick-row">昵称 <input id="nick" maxlength="16" placeholder="默认用设备识别码"></div>
+      <div class="btns">
+        <button class="btn" id="submitBtn">提交成绩</button>
+        <button class="btn ghost" id="retryBtn">再来一局</button>
+        <button class="btn ghost" id="menuBtn">返回菜单</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="leaderboard.js"></script>
+<script>
+(function () {
+  'use strict';
+  var BIN_URL = 'https://api.npoint.io/e2e1fdfb3c697d822942';
+  var board = WJBoard.create({ binUrl: BIN_URL, localKey: 'wj_board_tetris' });
+
+  var COLS = 10, ROWS = 20, CELL = 24;
+  var cv = document.getElementById('cv'), ctx = cv.getContext('2d');
+  var ncv = document.getElementById('next'), nctx = ncv.getContext('2d');
+
+  var SHAPES = {
+    I: { m: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], c: '#35d0ff' },
+    J: { m: [[1,0,0],[1,1,1],[0,0,0]], c: '#5a7bff' },
+    L: { m: [[0,0,1],[1,1,1],[0,0,0]], c: '#ff9f2e' },
+    O: { m: [[1,1],[1,1]], c: '#ffd93b' },
+    S: { m: [[0,1,1],[1,1,0],[0,0,0]], c: '#3ddc84' },
+    T: { m: [[0,1,0],[1,1,1],[0,0,0]], c: '#c86bff' },
+    Z: { m: [[1,1,0],[0,1,1],[0,0,0]], c: '#ff5a6e' }
+  };
+  var KEYS = Object.keys(SHAPES);
+
+  var screens = {
+    menu: document.getElementById('menu'),
+    records: document.getElementById('records'),
+    game: document.getElementById('game'),
+    over: document.getElementById('over')
+  };
+  function show(name) {
+    Object.keys(screens).forEach(function (k) { screens[k].classList.toggle('hidden', k !== name); });
+  }
+
+  // ---- 难度 ----
+  var diffInput = document.getElementById('diff'),
+      diffVal = document.getElementById('diffVal'),
+      diffTag = document.getElementById('diffTag');
+  function diffName(d) {
+    if (d <= 2) return '入门'; if (d <= 4) return '简单';
+    if (d <= 6) return '普通'; if (d <= 8) return '困难'; return '地狱';
+  }
+  function refreshDiff() {
+    diffVal.textContent = diffInput.value;
+    diffTag.textContent = '· ' + diffName(+diffInput.value);
+  }
+  diffInput.addEventListener('input', refreshDiff);
+  refreshDiff();
+
+  // ---- 游戏状态 ----
+  var grid, cur, bag, score, lines, timer, alive, paused, diff, softDrop, level;
+
+  function gravityMs() { return Math.max(50, 850 - diff * 80); } // Lv1:770ms → Lv10:50ms
+
+  function newBag() {
+    bag = KEYS.slice();
+    for (var i = bag.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = bag[i]; bag[i] = bag[j]; bag[j] = t;
+    }
+  }
+  function nextType() {
+    if (!bag.length) newBag();
+    return bag.pop();
+  }
+
+  function spawn() {
+    var type = nextType();
+    var shape = SHAPES[type];
+    cur = { type: type, m: shape.m.map(function (r) { return r.slice(); }), c: shape.c,
+            x: 3, y: type === 'I' ? -1 : 0 };
+    if (collide(cur.m, cur.x, cur.y)) { die(); return false; }
+    return true;
+  }
+
+  function collide(m, px, py) {
+    for (var y = 0; y < m.length; y++) {
+      for (var x = 0; x < m[y].length; x++) {
+        if (!m[y][x]) continue;
+        var gx = px + x, gy = py + y;
+        if (gx < 0 || gx >= COLS || gy >= ROWS) return true;
+        if (gy >= 0 && grid[gy][gx]) return true;
+      }
+    }
+    return false;
+  }
+
+  function rotate(m) {
+    var n = m.length, r = [];
+    for (var y = 0; y < n; y++) {
+      r[y] = [];
+      for (var x = 0; x < n; x++) r[y][x] = m[n - 1 - x][y];
+    }
+    return r;
+  }
+
+  function tryRotate() {
+    if (!cur) return;
+    var rm = rotate(cur.m);
+    var kicks = [0, -1, 1, -2, 2];
+    for (var i = 0; i < kicks.length; i++) {
+      if (!collide(rm, cur.x + kicks[i], cur.y)) { cur.m = rm; cur.x += kicks[i]; draw(); return; }
+      if (!collide(rm, cur.x + kicks[i], cur.y - 1)) { cur.m = rm; cur.x += kicks[i]; cur.y -= 1; draw(); return; }
+    }
+  }
+
+  function move(dx, dy) {
+    if (!cur || !alive || paused) return false;
+    if (!collide(cur.m, cur.x + dx, cur.y + dy)) {
+      cur.x += dx; cur.y += dy;
+      draw();
+      return true;
+    }
+    return false;
+  }
+
+  function hardDrop() {
+    if (!cur || !alive || paused) return;
+    var d = 0;
+    while (!collide(cur.m, cur.x, cur.y + 1)) { cur.y++; d++; }
+    score += d * 2;
+    lock();
+  }
+
+  function ghostY() {
+    var y = cur.y;
+    while (!collide(cur.m, cur.x, y + 1)) y++;
+    return y;
+  }
+
+  function lock() {
+    for (var y = 0; y < cur.m.length; y++) {
+      for (var x = 0; x < cur.m[y].length; x++) {
+        if (!cur.m[y][x]) continue;
+        var gy = cur.y + y;
+        if (gy >= 0) grid[gy][cur.x + x] = cur.c;
+      }
+    }
+    clearLines();
+    updateHud();
+    if (!spawn()) return;
+    draw();
+  }
+
+  function clearLines() {
+    var cleared = 0;
+    for (var y = ROWS - 1; y >= 0; y--) {
+      var full = true;
+      for (var x = 0; x < COLS; x++) {
+        if (!grid[y][x]) { full = false; break; }
+      }
+      if (full) {
+        grid.splice(y, 1);
+        grid.unshift(new Array(COLS).fill(null));
+        cleared++;
+        y++;
+      }
+    }
+    if (cleared) {
+      var pts = [0, 100, 300, 500, 800][cleared] * level;
+      score += pts;
+      lines += cleared;
+    }
+  }
+
+  function tick() {
+    if (!alive || paused) return;
+    if (softDrop) {
+      if (move(0, 1)) score += 1;
+      else lock();
+      updateHud(); draw();
+      return;
+    }
+    if (!move(0, 1)) lock();
+  }
+
+  function reset() {
+    grid = [];
+    for (var y = 0; y < ROWS; y++) grid.push(new Array(COLS).fill(null));
+    score = 0; lines = 0; alive = true; paused = false; softDrop = false;
+    gravCount = 0;
+    level = diff;
+    newBag(); nextType(); // 预消耗一个，让 next 预览有内容
+    document.getElementById('pauseBtn').textContent = '⏸';
+    updateHud();
+  }
+
+  function updateHud() {
+    document.getElementById('score').textContent = score;
+    document.getElementById('lines').textContent = lines;
+  }
+
+  function drawCell(g, x, y, color, ghost) {
+    var px = x * CELL, py = y * CELL;
+    g.fillStyle = ghost ? 'rgba(255,255,255,.10)' : color;
+    g.fillRect(px + 1, py + 1, CELL - 2, CELL - 2);
+    if (!ghost) {
+      g.fillStyle = 'rgba(255,255,255,.25)';
+      g.fillRect(px + 1, py + 1, CELL - 2, 3);
+    }
+  }
+
+  function draw() {
+    ctx.fillStyle = '#0a141a';
+    ctx.fillRect(0, 0, COLS * CELL, ROWS * CELL);
+    ctx.strokeStyle = 'rgba(255,255,255,.04)';
+    for (var g = 1; g < COLS; g++) {
+      ctx.beginPath(); ctx.moveTo(g * CELL, 0); ctx.lineTo(g * CELL, ROWS * CELL); ctx.stroke();
+    }
+    for (var y = 0; y < ROWS; y++) {
+      for (var x = 0; x < COLS; x++) {
+        if (grid[y][x]) drawCell(ctx, x, y, grid[y][x]);
+      }
+    }
+    if (cur && alive) {
+      var gy = ghostY();
+      for (var yy = 0; yy < cur.m.length; yy++) {
+        for (var xx = 0; xx < cur.m[yy].length; xx++) {
+          if (!cur.m[yy][xx]) continue;
+          if (gy + yy >= 0 && gy !== cur.y) drawCell(ctx, cur.x + xx, gy + yy, null, true);
+          if (cur.y + yy >= 0) drawCell(ctx, cur.x + xx, cur.y + yy, cur.c);
+        }
+      }
+    }
+    // 下一个
+    nctx.fillStyle = '#0a141a';
+    nctx.fillRect(0, 0, 88, 88);
+    if (bag.length) {
+      var nt = SHAPES[bag[bag.length - 1]];
+      var m = nt.m, n = m.length, cw = 88 / 4;
+      var ox = (4 - n) * cw / 2, oy = (4 - n) * cw / 2;
+      for (var ay = 0; ay < n; ay++) {
+        for (var ax = 0; ax < n; ax++) {
+          if (!m[ay][ax]) continue;
+          nctx.fillStyle = nt.c;
+          nctx.fillRect(ox + ax * cw + 1, oy + ay * cw + 1, cw - 2, cw - 2);
+        }
+      }
+    }
+    if (paused) {
+      ctx.fillStyle = 'rgba(0,0,0,.55)';
+      ctx.fillRect(0, 0, COLS * CELL, ROWS * CELL);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('已暂停', COLS * CELL / 2, ROWS * CELL / 2);
+    }
+  }
+
+  function die() {
+    alive = false;
+    clearInterval(timer);
+    draw();
+    setTimeout(gameOver, 350);
+  }
+
+  function startGame() {
+    diff = +diffInput.value;
+    reset();
+    show('game');
+    spawn();
+    draw();
+    clearInterval(timer);
+    timer = setInterval(tick, 60); // 60ms 基础节拍，加速下落时更跟手
+  }
+
+  // 注意：用 60ms 基础 tick + 计数器实现重力，保证软降跟手
+  var gravCount = 0;
+  var _tick = tick;
+  tick = function () {
+    if (!alive || paused) return;
+    if (softDrop) { _tick(); return; }
+    gravCount += 60;
+    if (gravCount >= gravityMs()) {
+      gravCount = 0;
+      if (!move(0, 1)) lock();
+    }
+  };
+
+  function togglePause() {
+    if (!alive) return;
+    paused = !paused;
+    document.getElementById('pauseBtn').textContent = paused ? '▶' : '⏸';
+    draw();
+  }
+
+  // ---- 输入 ----
+  document.addEventListener('keydown', function (e) {
+    var inGame = !screens.game.classList.contains('hidden');
+    if (e.key === 'ArrowLeft') { if (inGame) e.preventDefault(); move(-1, 0); }
+    else if (e.key === 'ArrowRight') { if (inGame) e.preventDefault(); move(1, 0); }
+    else if (e.key === 'ArrowDown') { if (inGame) e.preventDefault(); if (!e.repeat) softDrop = true; }
+    else if (e.key === 'ArrowUp' || e.key === 'x' || e.key === 'X') { if (inGame) e.preventDefault(); tryRotate(); }
+    else if (e.key === ' ') { if (inGame) e.preventDefault(); hardDrop(); }
+    else if (e.key === 'p' || e.key === 'P') { if (inGame) togglePause(); }
+  });
+  document.addEventListener('keyup', function (e) {
+    if (e.key === 'ArrowDown') softDrop = false;
+  });
+
+  document.querySelectorAll('.tbtns button').forEach(function (b) {
+    var act = b.getAttribute('data-act');
+    var down = function (e) {
+      e.preventDefault();
+      if (act === 'left') move(-1, 0);
+      else if (act === 'right') move(1, 0);
+      else if (act === 'rot') tryRotate();
+      else if (act === 'down') softDrop = true;
+      else if (act === 'drop') hardDrop();
+    };
+    var up = function (e) { e.preventDefault(); if (act === 'down') softDrop = false; };
+    b.addEventListener('touchstart', down, { passive: false });
+    b.addEventListener('touchend', up, { passive: false });
+    b.addEventListener('mousedown', down);
+    b.addEventListener('mouseup', up);
+    b.addEventListener('mouseleave', function () { if (act === 'down') softDrop = false; });
+  });
+
+  document.getElementById('pauseBtn').addEventListener('click', togglePause);
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && alive && !paused && !screens.game.classList.contains('hidden')) togglePause();
+  });
+
+  // ---- 结算 ----
+  var nickInput = document.getElementById('nick'),
+      submitBtn = document.getElementById('submitBtn'),
+      rankMsg = document.getElementById('rankMsg');
+
+  function gameOver() {
+    document.getElementById('finalScore').textContent = score;
+    document.getElementById('finalLines').textContent = '共消除 ' + lines + ' 行 · 难度 Lv.' + diff;
+    rankMsg.textContent = '';
+    rankMsg.className = '';
+    nickInput.value = board.getName() || board.pid;
+    submitBtn.disabled = false;
+    submitBtn.textContent = '提交成绩';
+    show('over');
+  }
+
+  submitBtn.addEventListener('click', function () {
+    submitBtn.disabled = true;
+    submitBtn.textContent = '提交中…';
+    var name = nickInput.value.trim() || board.pid;
+    board.saveName(name);
+    board.submit({ name: name, score: score, diff: diff }).then(function (r) {
+      if (r.rank >= 0) {
+        rankMsg.textContent = '🎉 恭喜！第 ' + (r.rank + 1) + ' 名，已记入' + (r.remote ? '全站' : '本地') + '排行榜！';
+        rankMsg.className = 'good';
+      } else {
+        rankMsg.textContent = r.remote ? '未进入前十，再接再厉！' : '成绩已保存到本地（网络未连接，未同步全站榜）。';
+      }
+      submitBtn.textContent = '已提交';
+    });
+  });
+
+  // ---- 按钮 ----
+  document.getElementById('startBtn').addEventListener('click', startGame);
+  document.getElementById('retryBtn').addEventListener('click', startGame);
+  document.getElementById('menuBtn').addEventListener('click', function () { show('menu'); });
+  document.getElementById('recordsBtn').addEventListener('click', function () {
+    show('records');
+    var el = document.getElementById('board');
+    el.innerHTML = '<p class="empty">加载中…</p>';
+    board.load().then(function (res) { board.render(el, res.list, res.remote); });
+  });
+  document.getElementById('backBtn').addEventListener('click', function () { show('menu'); });
+})();
+</script>
+</body>
+</html>
