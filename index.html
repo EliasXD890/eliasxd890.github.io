@@ -50,6 +50,44 @@
   .links { display: flex; gap: 12px; flex-wrap: wrap; }
   footer { text-align: center; margin-top: 64px; color: #7d97a9; font-size: .85rem; }
   footer a { color: #7d97a9; }
+
+  /* ---- 复古胶片影带 viewer ---- */
+  .film-modal {
+    position: fixed; inset: 0; z-index: 999; display: none;
+    background: rgba(5,5,8,.94); flex-direction: column; justify-content: center;
+  }
+  .film-modal.open { display: flex; }
+  .film-strip { background: #161616; border-top: 3px solid #000; border-bottom: 3px solid #000; }
+  .sprockets {
+    height: 30px; background-color: #0b0b0b;
+    background-image: radial-gradient(ellipse 9px 12px at 22px 15px, rgba(240,235,210,.92) 96%, transparent 100%);
+    background-size: 44px 30px; background-repeat: repeat-x;
+  }
+  .frames {
+    display: flex; gap: 22px; overflow-x: auto; padding: 20px 28px;
+    scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .frames::-webkit-scrollbar { display: none; }
+  .frame {
+    flex: 0 0 auto; scroll-snap-align: center; background: #000;
+    padding: 10px 10px 6px; border: 1px solid #3a3a3a;
+    box-shadow: 0 6px 24px rgba(0,0,0,.6);
+  }
+  .frame img { display: block; height: 54vh; width: auto; max-width: 82vw; object-fit: contain; background: #000; }
+  .frame figcaption { text-align: center; color: #d8c98a; font-size: .85rem; padding: 10px 4px 6px; letter-spacing: 1px; }
+  .film-ui { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 22px; }
+  .film-btn {
+    background: rgba(255,255,255,.08); color: #f0e6c8; border: 1px solid rgba(255,255,255,.25);
+    width: 46px; height: 46px; border-radius: 50%; font-size: 1.3rem; cursor: pointer;
+  }
+  .film-btn:hover { background: rgba(255,255,255,.18); }
+  .film-hint { color: #8a8a8a; font-size: .8rem; text-align: center; margin-top: 12px; letter-spacing: 1px; }
+  .film-close {
+    position: absolute; top: 18px; right: 20px; background: rgba(255,255,255,.08);
+    color: #fff; border: 1px solid rgba(255,255,255,.25); width: 44px; height: 44px;
+    border-radius: 50%; font-size: 1.1rem; cursor: pointer;
+  }
 </style>
 </head>
 <body>
@@ -112,10 +150,81 @@
     </div>
   </section>
 
+  <section>
+    <h2>旅行分享</h2>
+    <div class="card" style="text-align:center">
+      <p>香港之行：迪士尼城堡的夜、冰淇淋、雨后的小路，还有烧腊饭和菠萝包。</p>
+      <div class="row" style="justify-content:center">
+        <a class="btn" href="#" id="hkBtn">📷 点击查看我的香港旅行分享</a>
+      </div>
+    </div>
+  </section>
+
   <footer>
     Built with GitHub Pages · 2026 · WarmJam
   </footer>
 
 </div>
+
+<!-- 复古胶片 viewer -->
+<div class="film-modal" id="filmModal" role="dialog" aria-label="香港旅行照片">
+  <button class="film-close" id="filmClose" aria-label="关闭">✕</button>
+  <div class="film-strip">
+    <div class="sprockets"></div>
+    <div class="frames" id="filmFrames">
+      <figure class="frame">
+        <img src="hk-1.jpg" alt="香港迪士尼城堡夜景">
+        <figcaption>迪士尼城堡 · 烟花之夜</figcaption>
+      </figure>
+      <figure class="frame">
+        <img src="hk-2.jpg" alt="小小世界前的冰淇淋">
+        <figcaption>小小世界前 · 冰淇淋</figcaption>
+      </figure>
+      <figure class="frame">
+        <img src="hk-3.jpg" alt="雨后迪士尼小径">
+        <figcaption>雨后 · 迪士尼小径</figcaption>
+      </figure>
+      <figure class="frame">
+        <img src="hk-4.jpg" alt="烧腊饭和菠萝包">
+        <figcaption>烧腊饭 &amp; 菠萝包</figcaption>
+      </figure>
+    </div>
+    <div class="sprockets"></div>
+  </div>
+  <div class="film-ui">
+    <button class="film-btn" id="filmPrev" aria-label="上一张">‹</button>
+    <button class="film-btn" id="filmNext" aria-label="下一张">›</button>
+  </div>
+  <div class="film-hint">左右滑动或点击箭头浏览 · 点击空白处 / ✕ 关闭</div>
+</div>
+
+<script>
+(function () {
+  var modal = document.getElementById('filmModal');
+  var frames = document.getElementById('filmFrames');
+  document.getElementById('hkBtn').addEventListener('click', function (e) {
+    e.preventDefault();
+    modal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  });
+  function close() {
+    modal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  document.getElementById('filmClose').addEventListener('click', close);
+  modal.addEventListener('click', function (e) { if (e.target === modal) close(); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+  function step() {
+    var f = frames.querySelector('.frame');
+    return f ? f.offsetWidth + 22 : 320;
+  }
+  document.getElementById('filmPrev').addEventListener('click', function () {
+    frames.scrollBy({ left: -step(), behavior: 'smooth' });
+  });
+  document.getElementById('filmNext').addEventListener('click', function () {
+    frames.scrollBy({ left: step(), behavior: 'smooth' });
+  });
+})();
+</script>
 </body>
 </html>
